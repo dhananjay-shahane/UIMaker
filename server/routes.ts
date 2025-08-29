@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertChatMessageSchema } from "@shared/schema";
 import { z } from "zod";
+import { Ollama } from "ollama";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all MCP services
@@ -84,28 +85,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: "user",
       });
 
-      // Simulate AI processing
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Initialize Ollama client
+      const ollama = new Ollama({ host: 'http://localhost:11434' });
       
-      // Generate AI response based on the message
-      let aiResponse = "I understand your request. ";
-      
-      if (message.toLowerCase().includes("github")) {
-        aiResponse += "I can help you with GitHub operations. What specific task would you like me to perform?";
-      } else if (message.toLowerCase().includes("tool") || message.toLowerCase().includes("action")) {
-        aiResponse += "I can see the available tools for the selected services. Which tools would you like me to use?";
-      } else {
-        aiResponse += "How can I assist you with the MCP services today?";
+      // Prepare system prompt for MCP context
+      const systemPrompt = `You are an AI assistant that helps users interact with various services through the Model Context Protocol (MCP). You can help users with tasks related to GitHub, Jira, Confluence, Slack, Database operations, and Cloud services.
+
+Available services: ${serviceId ? `Currently selected: ${serviceId}` : 'GitHub, Jira, Confluence, Slack, Database, Cloud Services'}
+${selectedTools && selectedTools.length > 0 ? `Available tools: ${selectedTools.join(', ')}` : ''}
+
+Be helpful, concise, and ask clarifying questions when needed to better assist the user.`;
+
+      try {
+        // Call Ollama with llama3.2:1b model
+        const response = await ollama.chat({
+          model: 'llama3.2:1b',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message }
+          ],
+          stream: false,
+        });
+
+        const aiResponse = response.message.content;
+
+        // Store AI response
+        const responseMessage = await storage.createMessage({
+          content: aiResponse,
+          type: "assistant",
+        });
+
+        res.json({ response: responseMessage });
+      } catch (ollamaError) {
+        console.error('Ollama error:', ollamaError);
+        
+        // Fallback response if Ollama is not available
+        const fallbackResponse = `I'm having trouble connecting to the local AI model. Please make sure Ollama is running with the llama3.2:1b model.
+
+To start Ollama:
+1. Install Ollama: curl -fsSL https://ollama.com/install.sh | sh
+2. Pull the model: ollama pull llama3.2:1b
+3. Ensure Ollama is running: ollama serve
+
+Your message: "${message}"
+
+I can help you with MCP services once the connection is restored.`;
+
+        const responseMessage = await storage.createMessage({
+          content: fallbackResponse,
+          type: "assistant",
+        });
+
+        res.json({ response: responseMessage });
       }
-
-      // Store AI response
-      const responseMessage = await storage.createMessage({
-        content: aiResponse,
-        type: "assistant",
-      });
-
-      res.json({ response: responseMessage });
     } catch (error) {
+      console.error('Chat API error:', error);
       res.status(500).json({ message: "Failed to process chat message" });
     }
   });

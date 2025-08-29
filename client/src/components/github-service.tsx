@@ -41,37 +41,38 @@ export function GitHubService({
   };
 
   return (
-    <div className="p-6">
+    <div className="p-8">
       {/* GitHub Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-          <Github className="h-5 w-5" />
+      <div className="flex items-center gap-4 mb-8">
+        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+          <Github className="h-6 w-6" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold" data-testid="text-github-title">GitHub</h2>
-          <p className="text-sm text-muted-foreground" data-testid="text-github-description">
+          <h2 className="text-xl font-bold" data-testid="text-github-title">GitHub</h2>
+          <p className="text-base text-muted-foreground" data-testid="text-github-description">
             Version control and code collaboration
           </p>
         </div>
       </div>
 
       {/* Server Configuration */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-medium flex items-center gap-2">
-            <Server className="h-4 w-4" />
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold flex items-center gap-3">
+            <Server className="h-5 w-5" />
             Server Configuration
           </h3>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full" />
-              <span className="text-sm text-green-500" data-testid="text-connection-status">
+              <div className="w-3 h-3 bg-green-500 rounded-full" />
+              <span className="text-sm text-green-500 font-medium" data-testid="text-connection-status">
                 Last test: OK ({totalTools} tools)
               </span>
             </div>
             <Button
               onClick={() => onTestConnection("github")}
               disabled={isTesting}
+              variant="outline"
               data-testid="button-test-connection"
             >
               {isTesting ? "Testing..." : "Test Again"}
@@ -79,28 +80,30 @@ export function GitHubService({
           </div>
         </div>
         
-        <Card>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="server-url" className="text-sm font-medium mb-2">
+        <Card className="border-2">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="server-url" className="text-sm font-semibold">
                   Server URL
                 </Label>
                 <Input
                   id="server-url"
                   type="url"
                   defaultValue="https://api.github.com/mcp"
+                  className="h-11"
                   data-testid="input-server-url"
                 />
               </div>
-              <div>
-                <Label htmlFor="bearer-token" className="text-sm font-medium mb-2">
+              <div className="space-y-2">
+                <Label htmlFor="bearer-token" className="text-sm font-semibold">
                   Bearer Token
                 </Label>
                 <Input
                   id="bearer-token"
                   type="password"
                   defaultValue="ghp_****************************"
+                  className="h-11"
                   data-testid="input-bearer-token"
                 />
               </div>
@@ -111,25 +114,24 @@ export function GitHubService({
 
       {/* Available Actions */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-medium flex items-center gap-2">
-            <List className="h-4 w-4" />
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold flex items-center gap-3">
+            <List className="h-5 w-5" />
             Available Actions
-            <span className="text-xs text-muted-foreground" data-testid="text-selected-count">
-              ({selectedCount}/{totalTools} selected)
-            </span>
+            <Badge variant="secondary" className="text-sm font-medium" data-testid="text-selected-count">
+              {selectedCount} selected
+            </Badge>
           </h3>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               onClick={onDeselectAll}
               data-testid="button-deselect-all"
             >
-              <CheckSquare className="h-4 w-4 mr-1" />
+              <CheckSquare className="h-4 w-4 mr-2" />
               Deselect All
             </Button>
-            <span className="text-muted-foreground">|</span>
-            <span className="text-sm text-muted-foreground" data-testid="text-tools-available">
+            <span className="text-sm text-muted-foreground font-medium" data-testid="text-tools-available">
               {totalTools} tools available
             </span>
             <Button
@@ -137,45 +139,45 @@ export function GitHubService({
               onClick={onRefresh}
               data-testid="button-refresh-tools"
             >
-              <RotateCcw className="h-4 w-4 mr-1" />
               Refresh
             </Button>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {service?.tools?.map((tool) => (
-            <Card key={tool.id} className="transition-colors hover:bg-muted/50">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
+            <Card key={tool.id} className="transition-all hover:shadow-md border-2">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
                   <Checkbox
                     id={tool.id}
                     checked={selectedTools[tool.id] || false}
                     onCheckedChange={() => onToggleToolSelection(tool.id, tool.riskLevel)}
-                    className="mt-1"
+                    className="mt-1 h-5 w-5"
                     data-testid={`checkbox-tool-${tool.id}`}
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-sm" data-testid={`text-tool-name-${tool.id}`}>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-semibold text-base" data-testid={`text-tool-name-${tool.id}`}>
                             {tool.name}
                           </h4>
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${getRiskBadgeColor(tool.riskLevel)}`}
+                            className={`text-sm font-medium ${getRiskBadgeColor(tool.riskLevel)}`}
                             data-testid={`badge-risk-${tool.id}`}
                           >
                             {tool.riskLevel} risk
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground" data-testid={`text-tool-description-${tool.id}`}>
+                        <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-tool-description-${tool.id}`}>
                           {tool.description}
                         </p>
                       </div>
                       <Button
                         size="sm"
+                        variant="outline"
                         className="ml-4"
                         data-testid={`button-select-tool-${tool.id}`}
                       >

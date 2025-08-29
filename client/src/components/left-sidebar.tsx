@@ -44,21 +44,22 @@ export function LeftSidebar({
     }
   };
 
-  const formatTime = (date: Date) => {
+  const formatTime = (date: Date | string) => {
     const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+    const dateObj = date instanceof Date ? date : new Date(date);
+    const diff = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
     
     if (diff < 60) return `${diff} seconds ago`;
     if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-    return date.toLocaleTimeString();
+    return dateObj.toLocaleTimeString();
   };
 
   return (
     <div className="bg-card border-r border-border flex flex-col" style={{ width }}>
       {/* Header */}
       <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-lg font-semibold" data-testid="app-title">MCP Client</h1>
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl font-bold text-foreground" data-testid="app-title">MCP Client</h1>
           <div className="flex items-center gap-1">
             <Button 
               variant="ghost" 
@@ -73,16 +74,16 @@ export function LeftSidebar({
             </Button>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">Model Context Protocol Interface</p>
+        <p className="text-sm text-muted-foreground">Model Context Protocol Interface</p>
       </div>
 
       {/* LLM Chat Section */}
       <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-3">
-          <Bot className="h-4 w-4 text-primary" />
-          <h2 className="font-medium">LLM Chat</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <Bot className="h-5 w-5 text-primary" />
+          <h2 className="font-semibold text-lg">LLM Chat</h2>
           <Button variant="ghost" size="sm" className="ml-auto" data-testid="button-refresh-chat">
-            <RotateCcw className="h-3 w-3" />
+            <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
         
@@ -91,11 +92,16 @@ export function LeftSidebar({
             value={config.selectedModel} 
             onValueChange={(value) => updateConfig({ selectedModel: value })}
           >
-            <SelectTrigger data-testid="select-llm-model">
+            <SelectTrigger className="h-10" data-testid="select-llm-model">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ollama-llama3.2">Local LLM (Ollama)</SelectItem>
+              <SelectItem value="ollama-llama3.2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Local LLM (Ollama)
+                </div>
+              </SelectItem>
               <SelectItem value="openai-gpt4">OpenAI GPT-4</SelectItem>
               <SelectItem value="anthropic-claude">Anthropic Claude</SelectItem>
             </SelectContent>
@@ -128,17 +134,32 @@ export function LeftSidebar({
           {messages.map((message) => (
             <div 
               key={message.id} 
-              className={`p-3 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 ${
+              className={`p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 ${
                 message.type === "user" 
-                  ? "bg-primary/10 border border-primary/20" 
-                  : "bg-muted"
+                  ? "bg-primary text-primary-foreground ml-4" 
+                  : "bg-muted mr-4"
               }`}
               data-testid={`message-${message.type}-${message.id}`}
             >
-              <p className="text-sm">{message.content}</p>
-              <span className="text-xs text-muted-foreground mt-2 block">
-                {formatTime(message.timestamp)}
-              </span>
+              <div className="flex items-start gap-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  message.type === "user" 
+                    ? "bg-primary-foreground/20" 
+                    : "bg-primary/20"
+                }`}>
+                  {message.type === "user" ? (
+                    <span className="text-xs font-bold">U</span>
+                  ) : (
+                    <Bot className="h-3 w-3" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm leading-relaxed">{message.content}</p>
+                  <span className="text-xs opacity-70 mt-2 block">
+                    {formatTime(message.timestamp)}
+                  </span>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -146,7 +167,7 @@ export function LeftSidebar({
 
       {/* Chat Input */}
       <div className="p-4 border-t border-border">
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Input
             type="text"
             placeholder="Type a message..."
@@ -154,11 +175,13 @@ export function LeftSidebar({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isSending}
+            className="flex-1 h-12"
             data-testid="input-chat-message"
           />
           <Button 
             onClick={handleSendMessage}
             disabled={isSending || !inputMessage.trim()}
+            className="h-12 px-4"
             data-testid="button-send-message"
           >
             <Send className="h-4 w-4" />

@@ -30,11 +30,11 @@ export function MainContent({
   return (
     <div className="flex-1 flex flex-col bg-background">
       {/* Welcome Section */}
-      <div className="p-6 border-b border-border">
-        <h1 className="text-xl font-semibold mb-2" data-testid="text-welcome-title">
+      <div className="p-8 border-b border-border">
+        <h1 className="text-2xl font-bold mb-3" data-testid="text-welcome-title">
           Welcome to MCP Client
         </h1>
-        <p className="text-muted-foreground text-sm" data-testid="text-welcome-description">
+        <p className="text-muted-foreground text-base leading-relaxed" data-testid="text-welcome-description">
           Connect and interact with various services through the Model Context Protocol. 
           Use the chat interface on the left to communicate with LLMs or manage services directly through the tabs below.
         </p>
