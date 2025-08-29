@@ -80,7 +80,7 @@ export function GitHubService({
           </div>
         </div>
         
-        <Card className="border-2 bg-card text-card-foreground">
+        <Card className="service-card-glass border-2">
           <CardContent className="p-6">
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -146,7 +146,7 @@ export function GitHubService({
 
         <div className="space-y-4">
           {service?.tools?.map((tool) => (
-            <Card key={tool.id} className="transition-all hover:shadow-md border-2 bg-card text-card-foreground">
+            <Card key={tool.id} className="service-card-glass transition-all hover:shadow-md border-2">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <Checkbox

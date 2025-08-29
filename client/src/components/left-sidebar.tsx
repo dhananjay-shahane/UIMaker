@@ -281,7 +281,7 @@ export function LeftSidebar({
             <SelectTrigger className="h-10 bg-background border-input" data-testid="select-llm-model">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
-            <SelectContent className="bg-popover border-border z-50 border-2">
+            <SelectContent className="z-50 border-2">
               {models.map((model) => (
                 <SelectItem key={model.id} value={model.id}>
                   <div className="flex items-center gap-2">
@@ -395,7 +395,7 @@ export function LeftSidebar({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isSending}
-            className="flex-1 h-12 bg-background border-input focus:border-primary border-2"
+            className="chat-input-glass flex-1 h-12 focus:border-primary border-2"
             data-testid="input-chat-message"
           />
           <Button 

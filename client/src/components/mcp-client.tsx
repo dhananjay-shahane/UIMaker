@@ -8,7 +8,7 @@ export function MCPClient() {
   const mcpClient = useMCPClient();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+    <div className="main-container flex h-screen overflow-hidden bg-background text-foreground">
       <LeftSidebar 
         {...mcpClient}
         width={mcpClient.sidebarWidth}
