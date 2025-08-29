@@ -293,26 +293,6 @@ export function LeftSidebar({
             </SelectContent>
           </Select>
           
-          <div className="flex gap-2">
-            <Button 
-              variant="default" 
-              size="sm" 
-              className="flex-1"
-              data-testid="button-start-chat"
-            >
-              <Circle className="h-3 w-3 mr-1" />
-              Start
-            </Button>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="flex-1"
-              data-testid="button-stop-chat"
-            >
-              <Square className="h-3 w-3 mr-1" />
-              Stop
-            </Button>
-          </div>
           
         </div>
       </div>
