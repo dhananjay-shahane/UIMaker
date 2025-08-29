@@ -14,7 +14,7 @@ export function useMCPClient() {
       selectedModel: "ollama-llama3.2",
       selectedService: "github",
       selectedTools: {},
-      darkMode: true,
+      darkMode: false,
     };
   });
 
