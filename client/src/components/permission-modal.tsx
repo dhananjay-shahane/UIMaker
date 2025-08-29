@@ -11,7 +11,7 @@ interface PermissionModalProps {
 export function PermissionModal({ request, onApprove, onDeny }: PermissionModalProps) {
   return (
     <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50" data-testid="modal-permission">
-      <div className="bg-card border border-border rounded-lg p-6 max-w-md mx-4 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200">
+      <div className="permission-modal-glass border border-border rounded-lg p-6 max-w-md mx-4 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
             <AlertTriangle className="h-5 w-5 text-destructive" />

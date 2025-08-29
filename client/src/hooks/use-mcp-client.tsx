@@ -65,10 +65,13 @@ export function useMCPClient() {
 
   // Apply dark mode
   useEffect(() => {
+    const htmlElement = document.documentElement;
     if (config.darkMode) {
-      document.documentElement.classList.add("dark");
+      htmlElement.classList.add("dark");
+      htmlElement.setAttribute('data-theme', 'dark');
     } else {
-      document.documentElement.classList.remove("dark");
+      htmlElement.classList.remove("dark");
+      htmlElement.setAttribute('data-theme', 'light');
     }
   }, [config.darkMode]);
 

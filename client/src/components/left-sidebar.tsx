@@ -134,10 +134,10 @@ export function LeftSidebar({
               const codeContent = lines.slice(1).join('\n') || lines[0];
               
               return (
-                <div key={index} className="bg-slate-900 dark:bg-slate-900 rounded-lg p-3 border max-w-full">
+                <div key={index} className="code-block">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Code className="h-3 w-3" />
+                      <Code className="h-3 w-3 text-slate-400" />
                       <span className="text-xs text-slate-400">{language || 'code'}</span>
                     </div>
                     <Button
@@ -149,11 +149,9 @@ export function LeftSidebar({
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <div className="code-block max-w-full overflow-x-auto">
-                    <pre className="text-sm text-slate-100 whitespace-pre overflow-x-auto">
-                      <code className="block">{codeContent}</code>
-                    </pre>
-                  </div>
+                  <pre className="text-sm text-slate-100 whitespace-pre overflow-x-auto">
+                    <code className="block">{codeContent}</code>
+                  </pre>
                 </div>
               );
             } else {
@@ -325,7 +323,7 @@ export function LeftSidebar({
           {messages.map((message) => (
             <div 
               key={message.id} 
-              className={`group relative p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 max-w-full ${
+              className={`chat-message group relative p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 max-w-full ${
                 message.type === "user" 
                   ? "bg-primary text-primary-foreground ml-8 shadow-md border-2 border-primary/20" 
                   : "bg-card text-card-foreground mr-8 border-2 border-border shadow-sm"
@@ -370,7 +368,7 @@ export function LeftSidebar({
           
           {/* AI Thinking Indicator */}
           {isSending && (
-            <div className="p-4 rounded-lg bg-card text-card-foreground mr-8 border-2 border-border shadow-sm animate-in fade-in-0 slide-in-from-bottom-2">
+            <div className="chat-message p-4 rounded-lg bg-card text-card-foreground mr-8 border-2 border-border shadow-sm animate-in fade-in-0 slide-in-from-bottom-2">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border-2 border-muted-foreground/30">
                   <Bot className="h-4 w-4 text-primary" />
