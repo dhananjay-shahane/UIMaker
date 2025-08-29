@@ -88,10 +88,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Initialize Ollama client using environment variables
       const ollamaHost = process.env.LOCAL_LLM_BASE_URL || 'http://localhost:11434';
       const ollamaModel = process.env.LOCAL_LLM_MODEL || 'llama3.2:1b';
-      
-      console.log('DEBUG: Using Ollama host:', ollamaHost);
-      console.log('DEBUG: Using Ollama model:', ollamaModel);
-      
       const ollama = new Ollama({ host: ollamaHost });
       
       // Prepare system prompt for MCP context

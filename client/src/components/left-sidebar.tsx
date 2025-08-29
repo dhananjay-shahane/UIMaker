@@ -3,8 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square } from "lucide-react";
-import { useState } from "react";
+import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import type { ChatMessage, LLMModel } from "@/types/mcp";
 
 interface LeftSidebarProps {
@@ -16,6 +16,7 @@ interface LeftSidebarProps {
   sendMessage: (message: string) => void;
   updateConfig: (updates: any) => void;
   isSending: boolean;
+  onWidthChange: (width: number) => void;
 }
 
 export function LeftSidebar({
@@ -26,9 +27,51 @@ export function LeftSidebar({
   toggleTheme,
   sendMessage,
   updateConfig,
-  isSending
+  isSending,
+  onWidthChange
 }: LeftSidebarProps) {
   const [inputMessage, setInputMessage] = useState("");
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, [messages]);
+
+  // Handle sidebar resizing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = Math.max(280, Math.min(600, e.clientX));
+      onWidthChange(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, onWidthChange]);
 
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
@@ -55,7 +98,11 @@ export function LeftSidebar({
   };
 
   return (
-    <div className="bg-card border-r border-border flex flex-col" style={{ width }}>
+    <div 
+      ref={sidebarRef}
+      className="bg-card border-r border-border flex flex-col relative"
+      style={{ width, minWidth: 280, maxWidth: 600 }}
+    >
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
@@ -129,20 +176,20 @@ export function LeftSidebar({
       </div>
 
       {/* Chat Messages */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 overflow-hidden">
+        <div className="space-y-4 pr-2">
           {messages.map((message) => (
             <div 
               key={message.id} 
-              className={`p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 ${
+              className={`p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 max-w-full ${
                 message.type === "user" 
-                  ? "bg-primary text-primary-foreground ml-4" 
-                  : "bg-muted mr-4"
+                  ? "bg-primary text-primary-foreground ml-8" 
+                  : "bg-muted mr-8"
               }`}
               data-testid={`message-${message.type}-${message.id}`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.type === "user" 
                     ? "bg-primary-foreground/20" 
                     : "bg-primary/20"
@@ -150,11 +197,11 @@ export function LeftSidebar({
                   {message.type === "user" ? (
                     <span className="text-xs font-bold">U</span>
                   ) : (
-                    <Bot className="h-3 w-3" />
+                    <Bot className="h-4 w-4" />
                   )}
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm leading-relaxed">{message.content}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{message.content}</p>
                   <span className="text-xs opacity-70 mt-2 block">
                     {formatTime(message.timestamp)}
                   </span>
@@ -162,6 +209,23 @@ export function LeftSidebar({
               </div>
             </div>
           ))}
+          
+          {/* AI Thinking Indicator */}
+          {isSending && (
+            <div className="p-4 rounded-lg bg-muted mr-8 animate-in fade-in-0 slide-in-from-bottom-2">
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/20">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-muted-foreground">AI is thinking...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </ScrollArea>
 
@@ -184,8 +248,26 @@ export function LeftSidebar({
             className="h-12 px-4"
             data-testid="button-send-message"
           >
-            <Send className="h-4 w-4" />
+            {isSending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
+        </div>
+      </div>
+
+      {/* Resize Handle */}
+      <div 
+        className={`absolute right-0 top-0 bottom-0 w-1 bg-border hover:bg-primary/50 cursor-col-resize group ${
+          isResizing ? 'bg-primary' : ''
+        }`}
+        onMouseDown={handleMouseDown}
+      >
+        <div className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1/2">
+          <div className="bg-background border border-border rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <GripVertical className="h-3 w-3 text-muted-foreground" />
+          </div>
         </div>
       </div>
     </div>
