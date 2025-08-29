@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Client - Model Context Protocol Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(240 10% 3.9%);
+            --foreground: hsl(0 0% 98%);
+            --card: hsl(240 10% 3.9%);
+            --card-foreground: hsl(0 0% 98%);
+            --popover: hsl(240 10% 3.9%);
+            --popover-foreground: hsl(0 0% 98%);
+            --primary: hsl(217 91% 60%);
+            --primary-foreground: hsl(0 0% 98%);
+            --secondary: hsl(240 3.7% 15.9%);
+            --secondary-foreground: hsl(0 0% 98%);
+            --muted: hsl(240 3.7% 15.9%);
+            --muted-foreground: hsl(240 5% 64.9%);
+            --accent: hsl(240 3.7% 15.9%);
+            --accent-foreground: hsl(0 0% 98%);
+            --destructive: hsl(0 62.8% 30.6%);
+            --destructive-foreground: hsl(0 0% 98%);
+            --border: hsl(240 3.7% 15.9%);
+            --input: hsl(240 3.7% 15.9%);
+            --ring: hsl(217 91% 60%);
+            --radius: 0.5rem;
+        }
+
+        .resize-handle {
+            width: 4px;
+            background: transparent;
+            cursor: col-resize;
+            user-select: none;
+        }
+
+        .resize-handle:hover {
+            background: hsl(217 91% 60%);
+        }
+
+        .service-tab {
+            transition: all 0.2s ease;
+        }
+
+        .service-tab:hover {
+            background: hsl(240 3.7% 15.9%);
+        }
+
+        .service-tab.active {
+            background: hsl(240 10% 3.9%);
+            border-bottom: 2px solid hsl(217 91% 60%);
+        }
+
+        .chat-message {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .permission-modal {
+            backdrop-filter: blur(4px);
+        }
+
+        .tool-checkbox:checked + label {
+            background: hsl(240 3.7% 15.9%);
+        }
+
+        .status-connected {
+            color: hsl(142 71% 45%);
+        }
+
+        .status-connecting {
+            color: hsl(48 96% 53%);
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: hsl(240 3.7% 15.9%);
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: hsl(240 5% 34%);
+            border-radius: 3px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: hsl(240 5% 44%);
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground font-sans">
+    <!-- @COMPONENT: MainLayout -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- @COMPONENT: LeftSidebar -->
+        <div class="w-80 bg-card border-r border-border flex flex-col">
+            <!-- Header -->
+            <div class="p-4 border-b border-border">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-lg font-semibold">MCP Client</h1>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-muted-foreground">Model Context Protocol Interface</span>
+                        <div class="flex gap-1">
+                            <button class="w-8 h-8 rounded-md bg-muted hover:bg-accent flex items-center justify-center text-xs">
+                                <i class="fas fa-sun"></i>
+                            </button>
+                            <button class="w-8 h-8 rounded-md bg-muted hover:bg-accent flex items-center justify-center text-xs">
+                                <i class="fas fa-moon"></i>
+                            </button>
+                            <button class="w-8 h-8 rounded-md bg-muted hover:bg-accent flex items-center justify-center text-xs">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LLM Chat Section -->
+            <div class="p-4 border-b border-border">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-robot text-primary"></i>
+                    <h2 class="font-medium">LLM Chat</h2>
+                    <button class="ml-auto text-muted-foreground hover:text-foreground">
+                        <i class="fas fa-refresh text-xs"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <select class="w-full bg-muted border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                            <option data-mock="true">Local LLM (Ollama)</option>
+                            <option data-mock="true">OpenAI GPT-4</option>
+                            <option data-mock="true">Anthropic Claude</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button class="flex-1 bg-primary text-primary-foreground rounded-md px-3 py-2 text-sm font-medium hover:bg-primary/90">
+                            <i class="fas fa-circle mr-1"></i>
+                        </button>
+                        <button class="flex-1 bg-muted text-muted-foreground rounded-md px-3 py-2 text-sm font-medium hover:bg-accent">
+                            <i class="fas fa-square mr-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="flex-1 p-4 overflow-y-auto scrollbar-thin">
+                <div class="space-y-4">
+                    <!-- @MAP: messages.map(message => ( -->
+                    <div class="chat-message" data-mock="true">
+                        <div class="bg-muted p-3 rounded-lg">
+                            <p class="text-sm" data-bind="message.content">Welcome to MCP Client! I can help you interact with various services through the Model Context Protocol. What would you like to do?</p>
+                            <span class="text-xs text-muted-foreground mt-2 block" data-bind="message.timestamp">2 minutes ago</span>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-message" data-mock="true">
+                        <div class="bg-primary/10 border border-primary/20 p-3 rounded-lg">
+                            <p class="text-sm" data-bind="message.content">Can you help me check the available GitHub actions?</p>
+                            <span class="text-xs text-muted-foreground mt-2 block" data-bind="message.timestamp">1 minute ago</span>
+                        </div>
+                    </div>
+
+                    <div class="chat-message" data-mock="true">
+                        <div class="bg-muted p-3 rounded-lg">
+                            <p class="text-sm" data-bind="message.content">I can see you have GitHub configured. I found several available actions including creating issues, pull requests, and listing branches. Would you like me to help you execute any of these?</p>
+                            <span class="text-xs text-muted-foreground mt-2 block" data-bind="message.timestamp">30 seconds ago</span>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-4 border-t border-border">
+                <div class="flex gap-2">
+                    <input type="text" placeholder="Type a message..." class="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" data-mock="true">
+                    <button class="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:bg-primary/90" data-event="click:sendMessage">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: LeftSidebar -->
+
+        <!-- Resize Handle -->
+        <div class="resize-handle"></div>
+
+        <!-- @COMPONENT: MainContent -->
+        <div class="flex-1 flex flex-col bg-background">
+            <!-- Welcome Section -->
+            <div class="p-6 border-b border-border">
+                <h1 class="text-xl font-semibold mb-2">Welcome to MCP Client</h1>
+                <p class="text-muted-foreground text-sm">Connect and interact with various services through the Model Context Protocol. Use the chat interface on the left to communicate with LLMs or manage services directly through the tabs below.</p>
+            </div>
+
+            <!-- Service Tabs -->
+            <div class="border-b border-border">
+                <div class="flex overflow-x-auto">
+                    <!-- @MAP: services.map(service => ( -->
+                    <button class="service-tab flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap" data-service="jira">
+                        <i class="fas fa-tasks text-blue-500"></i>
+                        <span>Jira</span>
+                    </button>
+                    
+                    <button class="service-tab flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap" data-service="confluence">
+                        <i class="fas fa-book text-blue-600"></i>
+                        <span>Confluence</span>
+                    </button>
+                    
+                    <button class="service-tab active flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap" data-service="github">
+                        <i class="fab fa-github"></i>
+                        <span>GitHub</span>
+                    </button>
+                    
+                    <button class="service-tab flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap" data-service="slack">
+                        <i class="fab fa-slack text-purple-500"></i>
+                        <span>Slack</span>
+                    </button>
+                    
+                    <button class="service-tab flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap" data-service="database">
+                        <i class="fas fa-database text-green-500"></i>
+                        <span>Database</span>
+                    </button>
+                    
+                    <button class="service-tab flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap" data-service="cloud">
+                        <i class="fas fa-cloud text-blue-400"></i>
+                        <span>Cloud Services</span>
+                    </button>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+
+            <!-- GitHub Service Content -->
+            <div class="flex-1 overflow-y-auto scrollbar-thin">
+                <div class="p-6">
+                    <!-- GitHub Header -->
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                            <i class="fab fa-github text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold">GitHub</h2>
+                            <p class="text-sm text-muted-foreground">Version control and code collaboration</p>
+                        </div>
+                    </div>
+
+                    <!-- Server Configuration -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-medium flex items-center gap-2">
+                                <i class="fas fa-server text-sm"></i>
+                                Server Configuration
+                            </h3>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span class="text-sm text-green-500">Last test: OK (8 tools)</span>
+                                </div>
+                                <button class="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90">
+                                    Test Again
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Server URL</label>
+                                    <input type="url" value="https://api.github.com/mcp" class="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" data-mock="true">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Bearer Token</label>
+                                    <input type="password" value="ghp_****************************" class="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" data-mock="true">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Available Actions -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-medium flex items-center gap-2">
+                                <i class="fas fa-list text-sm"></i>
+                                Available Actions
+                                <span class="text-xs text-muted-foreground">(5/5 selected)</span>
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <button class="bg-muted text-muted-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-accent" data-event="click:deselectAll">
+                                    <i class="fas fa-square-minus mr-1"></i>
+                                    Deselect All
+                                </button>
+                                <span class="text-muted-foreground">|</span>
+                                <span class="text-sm text-muted-foreground">8 tools available</span>
+                                <button class="bg-muted text-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-accent" data-event="click:refresh">
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <!-- @MAP: tools.map(tool => ( -->
+                            <div class="bg-card border border-border rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <input type="checkbox" id="github_create_issue" class="tool-checkbox mt-1" checked data-risk="high" data-mock="true">
+                                    <label for="github_create_issue" class="flex-1 cursor-pointer">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-medium text-sm">GITHUB_CREATE_AN_ISSUE</h4>
+                                                <p class="text-sm text-muted-foreground mt-1">Creates a new issue in a github repository, requiring the repository to exist and have issues enabled; fields like assignees, milestone, or labels may require post-access.</p>
+                                            </div>
+                                            <button class="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90 ml-4">
+                                                Select
+                                            </button>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="bg-card border border-border rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <input type="checkbox" id="github_create_pr" class="tool-checkbox mt-1" checked data-risk="medium" data-mock="true">
+                                    <label for="github_create_pr" class="flex-1 cursor-pointer">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-medium text-sm">GITHUB_CREATE_A_PULL_REQUEST</h4>
+                                                <p class="text-sm text-muted-foreground mt-1">Creates a pull request in a github repository, requiring existing base and head branches. VSA or head must be provided.</p>
+                                            </div>
+                                            <button class="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90 ml-4">
+                                                Select
+                                            </button>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="bg-card border border-border rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <input type="checkbox" id="github_get_pr" class="tool-checkbox mt-1" checked data-risk="low" data-mock="true">
+                                    <label for="github_get_pr" class="flex-1 cursor-pointer">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-medium text-sm">GITHUB_GET_A_PULL_REQUEST</h4>
+                                                <p class="text-sm text-muted-foreground mt-1">Retrieves a specific pull request from a github repository using its owner, repository name, and pull request number.</p>
+                                            </div>
+                                            <button class="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90 ml-4">
+                                                Select
+                                            </button>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="bg-card border border-border rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <input type="checkbox" id="github_list_branches" class="tool-checkbox mt-1" checked data-risk="low" data-mock="true">
+                                    <label for="github_list_branches" class="flex-1 cursor-pointer">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-medium text-sm">GITHUB_LIST_BRANCHES</h4>
+                                                <p class="text-sm text-muted-foreground mt-1">List branches for an existing github repository, with an option to filter by protection status.</p>
+                                            </div>
+                                            <button class="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90 ml-4">
+                                                Select
+                                            </button>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="bg-card border border-border rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <input type="checkbox" id="github_list_commits" class="tool-checkbox mt-1" checked data-risk="low" data-mock="true">
+                                    <label for="github_list_commits" class="flex-1 cursor-pointer">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-medium text-sm">GITHUB_LIST_COMMITS</h4>
+                                                <p class="text-sm text-muted-foreground mt-1">Lists commits for a repository with optional filtering by author, since date, until date, and path.</p>
+                                            </div>
+                                            <button class="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90 ml-4">
+                                                Select
+                                            </button>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+    <!-- @END_COMPONENT: MainLayout -->
+
+    <!-- Permission Modal -->
+    <!-- @COMPONENT: PermissionModal -->
+    <div id="permission-modal" class="fixed inset-0 bg-black/50 permission-modal hidden items-center justify-center z-50">
+        <div class="bg-card border border-border rounded-lg p-6 max-w-md mx-4">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-destructive"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold">High Risk Action</h3>
+                    <p class="text-sm text-muted-foreground">This action requires your approval</p>
+                </div>
+            </div>
+            
+            <div class="bg-muted rounded-lg p-3 mb-4">
+                <p class="text-sm">The AI wants to create a new GitHub issue. This action can modify your repository.</p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button class="flex-1 bg-muted text-foreground rounded-md px-4 py-2 text-sm font-medium hover:bg-accent" data-event="click:deny">
+                    Deny
+                </button>
+                <button class="flex-1 bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:bg-primary/90" data-event="click:approve">
+                    Approve
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: PermissionModal -->
+
+    <script>
+        (function() {
+            // @STATE: selectedService:string = 'github'
+            // @STATE: selectedTools:string[] = []
+            // @STATE: isConnected:boolean = true
+            // @STATE: messages:array = []
+
+            // Tab switching functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const tabs = document.querySelectorAll('.service-tab');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // Remove active class from all tabs
+                        tabs.forEach(t => t.classList.remove('active'));
+                        // Add active class to clicked tab
+                        this.classList.add('active');
+                        
+                        // @FUNCTIONALITY: Switch service content based on selected tab
+                        const service = this.dataset.service;
+                        // TODO: Implement service content switching logic
+                    });
+                });
+
+                // Tool selection handling
+                const toolCheckboxes = document.querySelectorAll('.tool-checkbox');
+                toolCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        // @FUNCTIONALITY: Update tool selection state
+                        const toolId = this.id;
+                        const isSelected = this.checked;
+                        
+                        // Update localStorage with selection
+                        // window.dispatchEvent(new CustomEvent("localStorageChange", {
+                        //   detail: { 
+                        //     key: "mcp-client-tool-selection",
+                        //     newValue: JSON.stringify(selections)
+                        //   }
+                        // }));
+                        
+                        // TODO: Handle high-risk actions with permission modal
+                        if (this.dataset.risk === 'high' && isSelected) {
+                            showPermissionModal();
+                        }
+                    });
+                });
+
+                // Chat functionality
+                const chatInput = document.querySelector('input[placeholder="Type a message..."]');
+                const sendButton = document.querySelector('[data-event="click:sendMessage"]');
+                
+                function sendMessage() {
+                    const message = chatInput.value.trim();
+                    if (message) {
+                        // @FUNCTIONALITY: Add message to chat and get AI response
+                        // TODO: Implement chat message handling
+                        chatInput.value = '';
+                    }
+                }
+
+                sendButton?.addEventListener('click', sendMessage);
+                chatInput?.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+
+                // Permission modal handling
+                function showPermissionModal() {
+                    const modal = document.getElementById('permission-modal');
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+
+                function hidePermissionModal() {
+                    const modal = document.getElementById('permission-modal');
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+
+                // Modal button handlers
+                document.querySelector('[data-event="click:approve"]')?.addEventListener('click', function() {
+                    // @FUNCTIONALITY: Approve high-risk action
+                    hidePermissionModal();
+                    // TODO: Execute approved action
+                });
+
+                document.querySelector('[data-event="click:deny"]')?.addEventListener('click', function() {
+                    // @FUNCTIONALITY: Deny high-risk action
+                    hidePermissionModal();
+                    // TODO: Revert tool selection
+                });
+
+                // Deselect all functionality
+                document.querySelector('[data-event="click:deselectAll"]')?.addEventListener('click', function() {
+                    toolCheckboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    // TODO: Update localStorage and dispatch change event
+                });
+
+                // Refresh functionality
+                document.querySelector('[data-event="click:refresh"]')?.addEventListener('click', function() {
+                    // @FUNCTIONALITY: Refresh available tools from MCP server
+                    // TODO: Implement server refresh logic
+                });
+
+                // Theme toggle functionality
+                const themeButtons = document.querySelectorAll('.fa-sun, .fa-moon');
+                themeButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        // @FUNCTIONALITY: Toggle between light and dark themes
+                        document.documentElement.classList.toggle('dark');
+                        // TODO: Save theme preference to localStorage
+                    });
+                });
+
+                // Resize panel functionality
+                let isResizing = false;
+                const resizeHandle = document.querySelector('.resize-handle');
+                const leftSidebar = document.querySelector('.w-80');
+
+                resizeHandle?.addEventListener('mousedown', function(e) {
+                    isResizing = true;
+                    document.addEventListener('mousemove', handleResize);
+                    document.addEventListener('mouseup', stopResize);
+                });
+
+                function handleResize(e) {
+                    if (!isResizing) return;
+                    const newWidth = e.clientX;
+                    if (newWidth >= 200 && newWidth <= 500) {
+                        leftSidebar.style.width = newWidth + 'px';
+                    }
+                }
+
+                function stopResize() {
+                    isResizing = false;
+                    document.removeEventListener('mousemove', handleResize);
+                    document.removeEventListener('mouseup', stopResize);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
