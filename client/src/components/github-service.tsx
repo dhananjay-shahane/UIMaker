@@ -91,7 +91,7 @@ export function GitHubService({
                   id="server-url"
                   type="url"
                   defaultValue="https://api.github.com/mcp"
-                  className="h-11 bg-background border-input text-foreground"
+                  className="h-11 bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-500 text-black dark:text-gray-800"
                   data-testid="input-server-url"
                 />
               </div>
@@ -103,7 +103,7 @@ export function GitHubService({
                   id="bearer-token"
                   type="password"
                   defaultValue="ghp_****************************"
-                  className="h-11 bg-background border-input text-foreground"
+                  className="h-11 bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-500 text-black dark:text-gray-800"
                   data-testid="input-bearer-token"
                 />
               </div>

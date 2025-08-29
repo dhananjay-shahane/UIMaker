@@ -168,13 +168,13 @@ export function LeftSidebar({
   return (
     <div 
       ref={sidebarRef}
-      className="bg-card border-r border-border flex flex-col relative"
+      className="bg-white dark:bg-gray-100 border-r border-gray-200 dark:border-gray-400 flex flex-col relative"
       style={{ width, minWidth: 280, maxWidth: 600 }}
     >
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-400">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-foreground" data-testid="app-title">MCP Client</h1>
+          <h1 className="text-xl font-bold text-black dark:text-gray-800" data-testid="app-title">MCP Client</h1>
           <div className="flex items-center gap-1 relative">
             <Button 
               variant="ghost" 
@@ -260,14 +260,14 @@ export function LeftSidebar({
             )}
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">Model Context Protocol Interface</p>
+        <p className="text-sm text-gray-600 dark:text-gray-700">Model Context Protocol Interface</p>
       </div>
 
       {/* LLM Chat Section */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-400">
         <div className="flex items-center gap-2 mb-4">
           <Bot className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold text-lg">LLM Chat</h2>
+          <h2 className="font-semibold text-lg text-black dark:text-gray-800">LLM Chat</h2>
           <Button variant="ghost" size="sm" className="ml-auto" data-testid="button-refresh-chat">
             <RotateCcw className="h-4 w-4" />
           </Button>
@@ -278,10 +278,10 @@ export function LeftSidebar({
             value={config.selectedModel} 
             onValueChange={(value) => updateConfig({ selectedModel: value })}
           >
-            <SelectTrigger className="h-10 bg-background border-input" data-testid="select-llm-model">
+            <SelectTrigger className="h-10 bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-500 text-black dark:text-gray-800" data-testid="select-llm-model">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
-            <SelectContent className="z-50 border-2">
+            <SelectContent className="z-50 border-2 bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-500">
               {models.map((model) => (
                 <SelectItem key={model.id} value={model.id}>
                   <div className="flex items-center gap-2">
@@ -305,8 +305,8 @@ export function LeftSidebar({
               key={message.id} 
               className={`chat-message group relative p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 max-w-full ${
                 message.type === "user" 
-                  ? "bg-primary text-primary-foreground ml-8 shadow-md border-2 border-primary/20" 
-                  : "bg-card text-card-foreground mr-8 border-2 border-border shadow-sm"
+                  ? "bg-blue-600 dark:bg-blue-500 text-white ml-8 shadow-md border-2 border-blue-200 dark:border-blue-300" 
+                  : "bg-white dark:bg-gray-100 text-black dark:text-gray-800 mr-8 border-2 border-gray-200 dark:border-gray-400 shadow-sm"
               }`}
               data-testid={`message-${message.type}-${message.id}`}
             >
@@ -366,7 +366,7 @@ export function LeftSidebar({
       </ScrollArea>
 
       {/* Chat Input */}
-      <div className="p-4 border-t-2 border-border bg-card">
+      <div className="p-4 border-t-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-100">
         <div className="flex gap-3">
           <Input
             type="text"
@@ -375,7 +375,7 @@ export function LeftSidebar({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isSending}
-            className="chat-input-glass flex-1 h-12 focus:border-primary border-2"
+            className="chat-input-glass flex-1 h-12 bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-500 text-black dark:text-gray-800 focus:border-blue-500 border-2"
             data-testid="input-chat-message"
           />
           <Button 

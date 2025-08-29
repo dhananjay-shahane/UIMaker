@@ -28,13 +28,13 @@ export function MainContent({
   const currentService = services.find(s => s.id === config.selectedService);
 
   return (
-    <div className="flex-1 flex flex-col bg-background text-foreground">
+    <div className="flex-1 flex flex-col bg-white dark:bg-gray-300 text-black dark:text-gray-800">
       {/* Welcome Section */}
-      <div className="p-8 border-b-2 border-border bg-card">
-        <h1 className="text-2xl font-bold mb-3 text-foreground" data-testid="text-welcome-title">
+      <div className="p-8 border-b-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-100">
+        <h1 className="text-2xl font-bold mb-3 text-black dark:text-gray-800" data-testid="text-welcome-title">
           Welcome to MCP Client
         </h1>
-        <p className="text-muted-foreground text-base leading-relaxed" data-testid="text-welcome-description">
+        <p className="text-gray-600 dark:text-gray-700 text-base leading-relaxed" data-testid="text-welcome-description">
           Connect and interact with various services through the Model Context Protocol. 
           Use the chat interface on the left to communicate with LLMs or manage services directly through the tabs below.
         </p>
@@ -48,7 +48,7 @@ export function MainContent({
       />
 
       {/* Service Content */}
-      <div className="flex-1 overflow-y-auto bg-background">
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-300">
         {config.selectedService === "github" && (
           <GitHubService
             service={currentService}
@@ -63,12 +63,12 @@ export function MainContent({
         )}
         
         {config.selectedService !== "github" && (
-          <div className="p-6 bg-background">
+          <div className="p-6 bg-white dark:bg-gray-300">
             <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2 text-foreground" data-testid="text-service-placeholder">
+              <h3 className="text-lg font-medium mb-2 text-black dark:text-gray-800" data-testid="text-service-placeholder">
                 {currentService?.name || "Service"} Configuration
               </h3>
-              <p className="text-muted-foreground" data-testid="text-service-placeholder-description">
+              <p className="text-gray-600 dark:text-gray-700" data-testid="text-service-placeholder-description">
                 This service configuration will be available in a future update.
               </p>
             </div>
