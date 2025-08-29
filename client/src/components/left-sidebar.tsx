@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2, Copy, Code } from "lucide-react";
+import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2, Copy, Code, StopCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import type { ChatMessage, LLMModel } from "@/types/mcp";
@@ -375,13 +375,23 @@ export function LeftSidebar({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isSending}
-            className="chat-input-glass flex-1 h-12 bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-500 text-black dark:text-gray-800 focus:border-blue-500 border-2"
+            className="chat-input-glass flex-1 h-12 bg-white dark:bg-gray-100 border-gray-300 dark:border-gray-400 text-black dark:text-gray-800 focus:border-blue-500 border-2 shadow-sm focus:shadow-md transition-shadow"
             data-testid="input-chat-message"
           />
+          {isSending && (
+            <Button 
+              onClick={() => {/* Stop functionality */}}
+              variant="outline"
+              className="h-12 px-4 shadow-sm hover:shadow-md transition-all duration-200 border-red-300 hover:border-red-400 text-red-600 hover:text-red-700"
+              data-testid="button-stop-chat"
+            >
+              <StopCircle className="h-4 w-4" />
+            </Button>
+          )}
           <Button 
             onClick={handleSendMessage}
             disabled={isSending || !inputMessage.trim()}
-            className="h-12 px-4 bg-primary hover:bg-primary/90"
+            className="h-12 px-4 bg-primary hover:bg-primary/90 shadow-sm hover:shadow-md transition-all duration-200"
             data-testid="button-send-message"
           >
             {isSending ? (

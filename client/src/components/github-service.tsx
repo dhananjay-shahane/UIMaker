@@ -73,6 +73,7 @@ export function GitHubService({
               onClick={() => onTestConnection("github")}
               disabled={isTesting}
               variant="outline"
+              className="shadow-sm hover:shadow-md transition-all duration-200"
               data-testid="button-test-connection"
             >
               {isTesting ? "Testing..." : "Test Again"}
@@ -91,7 +92,7 @@ export function GitHubService({
                   id="server-url"
                   type="url"
                   defaultValue="https://api.github.com/mcp"
-                  className="h-11 bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-500 text-black dark:text-gray-800"
+                  className="h-11 bg-white dark:bg-gray-100 border-gray-300 dark:border-gray-400 text-black dark:text-gray-800 shadow-sm focus:shadow-md transition-shadow"
                   data-testid="input-server-url"
                 />
               </div>
@@ -103,7 +104,7 @@ export function GitHubService({
                   id="bearer-token"
                   type="password"
                   defaultValue="ghp_****************************"
-                  className="h-11 bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-500 text-black dark:text-gray-800"
+                  className="h-11 bg-white dark:bg-gray-100 border-gray-300 dark:border-gray-400 text-black dark:text-gray-800 shadow-sm focus:shadow-md transition-shadow"
                   data-testid="input-bearer-token"
                 />
               </div>
@@ -126,6 +127,7 @@ export function GitHubService({
             <Button
               variant="outline"
               onClick={onDeselectAll}
+              className="shadow-sm hover:shadow-md transition-all duration-200"
               data-testid="button-deselect-all"
             >
               <CheckSquare className="h-4 w-4 mr-2" />
@@ -137,6 +139,7 @@ export function GitHubService({
             <Button
               variant="outline"
               onClick={onRefresh}
+              className="shadow-sm hover:shadow-md transition-all duration-200"
               data-testid="button-refresh-tools"
             >
               Refresh
@@ -146,21 +149,21 @@ export function GitHubService({
 
         <div className="space-y-4">
           {service?.tools?.map((tool) => (
-            <Card key={tool.id} className="service-card-glass transition-all hover:shadow-lg border-2 bg-white dark:bg-gray-50 border-gray-200 dark:border-gray-300 shadow-md dark:shadow-lg">
+            <Card key={tool.id} className="service-card-glass transition-all hover:shadow-xl hover:scale-[1.02] border-2 bg-white dark:bg-gray-50 border-gray-200 dark:border-gray-300 shadow-md dark:shadow-lg cursor-pointer">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <Checkbox
                     id={tool.id}
                     checked={selectedTools[tool.id] || false}
                     onCheckedChange={() => onToggleToolSelection(tool.id, tool.riskLevel)}
-                    className="mt-1 h-5 w-5"
+                    className="mt-1 h-5 w-5 cursor-pointer"
                     data-testid={`checkbox-tool-${tool.id}`}
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-semibold text-base text-foreground" data-testid={`text-tool-name-${tool.id}`}>
+                          <h4 className="font-semibold text-base text-black dark:text-gray-800 cursor-pointer hover:text-blue-600 dark:hover:text-blue-500 transition-colors" data-testid={`text-tool-name-${tool.id}`} onClick={() => onToggleToolSelection(tool.id, tool.riskLevel)}>
                             {tool.name}
                           </h4>
                           <Badge 
