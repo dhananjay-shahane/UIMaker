@@ -35,7 +35,7 @@ const serviceColors = {
 
 export function ServiceTabs({ services, selectedService, onSelectService }: ServiceTabsProps) {
   return (
-    <div className="border-b border-border">
+    <div className="border-b-2 border-border bg-card">
       <div className="flex overflow-x-auto">
         {services.map((service) => {
           const Icon = serviceIcons[service.id as keyof typeof serviceIcons] || List;
@@ -48,8 +48,8 @@ export function ServiceTabs({ services, selectedService, onSelectService }: Serv
               variant="ghost"
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap rounded-none border-b-2 transition-colors ${
                 isSelected 
-                  ? "border-primary bg-background" 
-                  : "border-transparent hover:bg-muted"
+                  ? "border-primary bg-primary/10 text-primary" 
+                  : "border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => onSelectService(service.id)}
               data-testid={`tab-service-${service.id}`}

@@ -30,7 +30,7 @@ export function MainContent({
   return (
     <div className="flex-1 flex flex-col bg-background text-foreground">
       {/* Welcome Section */}
-      <div className="p-8 border-b border-border bg-card/50">
+      <div className="p-8 border-b-2 border-border bg-card">
         <h1 className="text-2xl font-bold mb-3 text-foreground" data-testid="text-welcome-title">
           Welcome to MCP Client
         </h1>

@@ -283,7 +283,7 @@ export function LeftSidebar({
             <SelectTrigger className="h-10 bg-background border-input" data-testid="select-llm-model">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
-            <SelectContent className="bg-popover backdrop-blur-sm border-border z-50">
+            <SelectContent className="bg-popover border-border z-50 border-2">
               {models.map((model) => (
                 <SelectItem key={model.id} value={model.id}>
                   <div className="flex items-center gap-2">
@@ -327,28 +327,28 @@ export function LeftSidebar({
               key={message.id} 
               className={`group relative p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 max-w-full ${
                 message.type === "user" 
-                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white ml-8 shadow-md" 
-                  : "bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 mr-8 border shadow-sm"
+                  ? "bg-primary text-primary-foreground ml-8 shadow-md border-2 border-primary/20" 
+                  : "bg-card text-card-foreground mr-8 border-2 border-border shadow-sm"
               }`}
               data-testid={`message-${message.type}-${message.id}`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${
                   message.type === "user" 
-                    ? "bg-white/20 backdrop-blur-sm" 
-                    : "bg-blue-500/10 border border-blue-200 dark:border-blue-800"
+                    ? "bg-primary-foreground/20 border-primary-foreground/30" 
+                    : "bg-muted border-muted-foreground/30"
                 }`}>
                   {message.type === "user" ? (
-                    <span className="text-sm font-bold text-white">U</span>
+                    <span className="text-sm font-bold text-primary-foreground">U</span>
                   ) : (
-                    <Bot className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <Bot className="h-4 w-4 text-primary" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   {renderMessageContent(message.content, message.type === "assistant")}
                   <div className="flex items-center justify-between mt-2">
                     <span className={`text-xs ${
-                      message.type === "user" ? "text-white/70" : "text-slate-500 dark:text-slate-400"
+                      message.type === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
                     }`}>
                       {formatTime(message.timestamp)}
                     </span>
@@ -357,7 +357,7 @@ export function LeftSidebar({
                         variant="ghost"
                         size="sm"
                         onClick={() => copyToClipboard(message.content)}
-                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -370,15 +370,15 @@ export function LeftSidebar({
           
           {/* AI Thinking Indicator */}
           {isSending && (
-            <div className="p-4 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 mr-8 border shadow-sm animate-in fade-in-0 slide-in-from-bottom-2">
+            <div className="p-4 rounded-lg bg-card text-card-foreground mr-8 border-2 border-border shadow-sm animate-in fade-in-0 slide-in-from-bottom-2">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-500/10 border border-blue-200 dark:border-blue-800">
-                  <Bot className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border-2 border-muted-foreground/30">
+                  <Bot className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">AI is thinking...</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm text-foreground">AI is thinking...</span>
                   </div>
                 </div>
               </div>
@@ -388,7 +388,7 @@ export function LeftSidebar({
       </ScrollArea>
 
       {/* Chat Input */}
-      <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm">
+      <div className="p-4 border-t-2 border-border bg-card">
         <div className="flex gap-3">
           <Input
             type="text"
@@ -397,7 +397,7 @@ export function LeftSidebar({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isSending}
-            className="flex-1 h-12 bg-background/80 border-input focus:border-primary"
+            className="flex-1 h-12 bg-background border-input focus:border-primary border-2"
             data-testid="input-chat-message"
           />
           <Button 
