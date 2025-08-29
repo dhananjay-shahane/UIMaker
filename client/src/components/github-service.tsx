@@ -41,15 +41,15 @@ export function GitHubService({
   };
 
   return (
-    <div className="p-8 bg-background text-foreground">
+    <div className="p-8 bg-white dark:bg-gray-300 text-black dark:text-gray-800">
       {/* GitHub Header */}
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center border">
-          <Github className="h-6 w-6 text-foreground" />
+        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-200 rounded-lg flex items-center justify-center border border-gray-300 dark:border-gray-400 shadow-sm">
+          <Github className="h-6 w-6 text-black dark:text-gray-800" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground" data-testid="text-github-title">GitHub</h2>
-          <p className="text-base text-muted-foreground" data-testid="text-github-description">
+          <h2 className="text-xl font-bold text-black dark:text-gray-800" data-testid="text-github-title">GitHub</h2>
+          <p className="text-base text-gray-600 dark:text-gray-700" data-testid="text-github-description">
             Version control and code collaboration
           </p>
         </div>
@@ -80,7 +80,7 @@ export function GitHubService({
           </div>
         </div>
         
-        <Card className="service-card-glass border-2">
+        <Card className="service-card-glass border-2 bg-white dark:bg-gray-50 border-gray-200 dark:border-gray-300 shadow-md dark:shadow-lg">
           <CardContent className="p-6">
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -146,7 +146,7 @@ export function GitHubService({
 
         <div className="space-y-4">
           {service?.tools?.map((tool) => (
-            <Card key={tool.id} className="service-card-glass transition-all hover:shadow-md border-2">
+            <Card key={tool.id} className="service-card-glass transition-all hover:shadow-lg border-2 bg-white dark:bg-gray-50 border-gray-200 dark:border-gray-300 shadow-md dark:shadow-lg">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <Checkbox
@@ -171,7 +171,7 @@ export function GitHubService({
                             {tool.riskLevel} risk
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-tool-description-${tool.id}`}>
+                        <p className="text-sm text-gray-600 dark:text-gray-700 leading-relaxed" data-testid={`text-tool-description-${tool.id}`}>
                           {tool.description}
                         </p>
                       </div>

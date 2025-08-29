@@ -48,7 +48,7 @@ export function MainContent({
       />
 
       {/* Service Content */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-300">
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-300 no-scrollbar">
         {config.selectedService === "github" && (
           <GitHubService
             service={currentService}
