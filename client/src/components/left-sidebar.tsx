@@ -168,7 +168,7 @@ export function LeftSidebar({
   return (
     <div 
       ref={sidebarRef}
-      className="bg-white dark:bg-gray-100 border-r border-gray-200 dark:border-gray-400 flex flex-col relative"
+      className="bg-white dark:bg-gray-200 border-r border-gray-200 dark:border-gray-400 flex flex-col relative"
       style={{ width, minWidth: 280, maxWidth: 600 }}
     >
       {/* Header */}
@@ -366,7 +366,7 @@ export function LeftSidebar({
       </ScrollArea>
 
       {/* Chat Input */}
-      <div className="p-4 border-t-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-100">
+      <div className="p-4 border-t-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-200">
         <div className="flex gap-3">
           <Input
             type="text"

@@ -181,10 +181,11 @@ export function GitHubService({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="ml-4 border-input bg-background text-foreground hover:bg-accent"
+                        onClick={() => onToggleToolSelection(tool.id, tool.riskLevel)}
+                        className="ml-4 shadow-sm hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-100 text-black dark:text-gray-800 border-gray-300 dark:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-200"
                         data-testid={`button-select-tool-${tool.id}`}
                       >
-                        Select
+                        {selectedTools[tool.id] ? 'Deselect' : 'Select'}
                       </Button>
                     </div>
                   </div>
