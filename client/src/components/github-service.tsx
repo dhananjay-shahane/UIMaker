@@ -41,14 +41,14 @@ export function GitHubService({
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-background text-foreground">
       {/* GitHub Header */}
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-          <Github className="h-6 w-6" />
+        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center border">
+          <Github className="h-6 w-6 text-foreground" />
         </div>
         <div>
-          <h2 className="text-xl font-bold" data-testid="text-github-title">GitHub</h2>
+          <h2 className="text-xl font-bold text-foreground" data-testid="text-github-title">GitHub</h2>
           <p className="text-base text-muted-foreground" data-testid="text-github-description">
             Version control and code collaboration
           </p>
@@ -80,30 +80,30 @@ export function GitHubService({
           </div>
         </div>
         
-        <Card className="border-2">
+        <Card className="border-2 bg-card text-card-foreground">
           <CardContent className="p-6">
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="server-url" className="text-sm font-semibold">
+                <Label htmlFor="server-url" className="text-sm font-semibold text-foreground">
                   Server URL
                 </Label>
                 <Input
                   id="server-url"
                   type="url"
                   defaultValue="https://api.github.com/mcp"
-                  className="h-11"
+                  className="h-11 bg-background border-input text-foreground"
                   data-testid="input-server-url"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bearer-token" className="text-sm font-semibold">
+                <Label htmlFor="bearer-token" className="text-sm font-semibold text-foreground">
                   Bearer Token
                 </Label>
                 <Input
                   id="bearer-token"
                   type="password"
                   defaultValue="ghp_****************************"
-                  className="h-11"
+                  className="h-11 bg-background border-input text-foreground"
                   data-testid="input-bearer-token"
                 />
               </div>
@@ -146,7 +146,7 @@ export function GitHubService({
 
         <div className="space-y-4">
           {service?.tools?.map((tool) => (
-            <Card key={tool.id} className="transition-all hover:shadow-md border-2">
+            <Card key={tool.id} className="transition-all hover:shadow-md border-2 bg-card text-card-foreground">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <Checkbox
@@ -160,7 +160,7 @@ export function GitHubService({
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-semibold text-base" data-testid={`text-tool-name-${tool.id}`}>
+                          <h4 className="font-semibold text-base text-foreground" data-testid={`text-tool-name-${tool.id}`}>
                             {tool.name}
                           </h4>
                           <Badge 
@@ -178,7 +178,7 @@ export function GitHubService({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="ml-4"
+                        className="ml-4 border-input bg-background text-foreground hover:bg-accent"
                         data-testid={`button-select-tool-${tool.id}`}
                       >
                         Select

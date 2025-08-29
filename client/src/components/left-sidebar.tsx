@@ -134,7 +134,7 @@ export function LeftSidebar({
               const codeContent = lines.slice(1).join('\n') || lines[0];
               
               return (
-                <div key={index} className="bg-slate-900 rounded-lg p-3 border">
+                <div key={index} className="bg-slate-900 dark:bg-slate-900 rounded-lg p-3 border max-w-full">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Code className="h-3 w-3" />
@@ -144,14 +144,16 @@ export function LeftSidebar({
                       variant="ghost"
                       size="sm"
                       onClick={() => copyToClipboard(codeContent)}
-                      className="h-6 w-6 p-0 text-slate-400 hover:text-white"
+                      className="h-6 w-6 p-0 text-slate-400 hover:text-white flex-shrink-0"
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <pre className="text-sm text-slate-100 overflow-x-auto">
-                    <code>{codeContent}</code>
-                  </pre>
+                  <div className="code-block max-w-full overflow-x-auto">
+                    <pre className="text-sm text-slate-100 whitespace-pre overflow-x-auto">
+                      <code className="block">{codeContent}</code>
+                    </pre>
+                  </div>
                 </div>
               );
             } else {
@@ -175,7 +177,7 @@ export function LeftSidebar({
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-foreground" data-testid="app-title">MCP Client</h1>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 relative">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -192,6 +194,72 @@ export function LeftSidebar({
             >
               <Settings className="h-4 w-4" />
             </Button>
+            
+            {/* Settings Popup */}
+            {showSettings && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowSettings(false)}
+                />
+                <div className="settings-popup w-80 p-4 z-50">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-lg">Settings</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowSettings(false)}
+                      className="h-6 w-6 p-0"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Theme</p>
+                        <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={toggleTheme}
+                        className="flex items-center gap-2"
+                      >
+                        {config.darkMode ? (
+                          <>
+                            <Sun className="h-3 w-3" />
+                            Light
+                          </>
+                        ) : (
+                          <>
+                            <Moon className="h-3 w-3" />
+                            Dark
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <p className="font-medium mb-2">Current Model</p>
+                      <p className="text-sm text-muted-foreground">
+                        {models.find(m => m.id === config.selectedModel)?.name || 'Unknown Model'}
+                      </p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <p className="font-medium mb-2">App Version</p>
+                      <p className="text-sm text-muted-foreground">MCP Client v1.0.0</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
         <p className="text-sm text-muted-foreground">Model Context Protocol Interface</p>
@@ -248,26 +316,6 @@ export function LeftSidebar({
             </Button>
           </div>
           
-          {showSettings && (
-            <div className="p-3 bg-muted/50 rounded-lg border">
-              <h4 className="text-sm font-medium mb-2">Settings</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span>Dark Mode</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={toggleTheme}
-                  >
-                    {config.darkMode ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Model: {models.find(m => m.id === config.selectedModel)?.name || 'Unknown'}</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

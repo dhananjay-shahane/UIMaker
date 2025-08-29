@@ -28,10 +28,10 @@ export function MainContent({
   const currentService = services.find(s => s.id === config.selectedService);
 
   return (
-    <div className="flex-1 flex flex-col bg-background">
+    <div className="flex-1 flex flex-col bg-background text-foreground">
       {/* Welcome Section */}
-      <div className="p-8 border-b border-border">
-        <h1 className="text-2xl font-bold mb-3" data-testid="text-welcome-title">
+      <div className="p-8 border-b border-border bg-card/50">
+        <h1 className="text-2xl font-bold mb-3 text-foreground" data-testid="text-welcome-title">
           Welcome to MCP Client
         </h1>
         <p className="text-muted-foreground text-base leading-relaxed" data-testid="text-welcome-description">
@@ -48,7 +48,7 @@ export function MainContent({
       />
 
       {/* Service Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-background">
         {config.selectedService === "github" && (
           <GitHubService
             service={currentService}
@@ -63,9 +63,9 @@ export function MainContent({
         )}
         
         {config.selectedService !== "github" && (
-          <div className="p-6">
+          <div className="p-6 bg-background">
             <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2" data-testid="text-service-placeholder">
+              <h3 className="text-lg font-medium mb-2 text-foreground" data-testid="text-service-placeholder">
                 {currentService?.name || "Service"} Configuration
               </h3>
               <p className="text-muted-foreground" data-testid="text-service-placeholder-description">

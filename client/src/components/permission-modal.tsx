@@ -10,8 +10,8 @@ interface PermissionModalProps {
 
 export function PermissionModal({ request, onApprove, onDeny }: PermissionModalProps) {
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" data-testid="modal-permission">
-      <div className="bg-card border border-border rounded-lg p-6 max-w-md mx-4 shadow-lg">
+    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50" data-testid="modal-permission">
+      <div className="bg-card border border-border rounded-lg p-6 max-w-md mx-4 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
             <AlertTriangle className="h-5 w-5 text-destructive" />
@@ -24,23 +24,26 @@ export function PermissionModal({ request, onApprove, onDeny }: PermissionModalP
           </div>
         </div>
         
-        <div className="bg-muted rounded-lg p-3 mb-4">
-          <p className="text-sm" data-testid="text-permission-description">
-            The AI wants to use {request.toolName}. {request.description}
+        <div className="bg-muted/80 backdrop-blur-sm rounded-lg p-3 mb-4 border">
+          <p className="text-sm font-medium" data-testid="text-permission-description">
+            The AI wants to use <span className="font-semibold text-foreground">{request.toolName}</span>
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {request.description}
           </p>
         </div>
         
         <div className="flex gap-3">
           <Button 
             variant="outline" 
-            className="flex-1"
+            className="flex-1 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
             onClick={onDeny}
             data-testid="button-deny-permission"
           >
             Deny
           </Button>
           <Button 
-            className="flex-1"
+            className="flex-1 bg-primary hover:bg-primary/90"
             onClick={onApprove}
             data-testid="button-approve-permission"
           >
