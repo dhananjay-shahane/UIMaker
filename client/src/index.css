@@ -283,10 +283,38 @@
 }
 
 .dark .chat-input-glass {
-  background: rgba(25, 30, 40, 0.8);
+  background: rgba(240, 244, 248, 0.9) !important;
+  color: hsl(220, 15%, 20%) !important;
   backdrop-filter: blur(10px) saturate(120%);
   -webkit-backdrop-filter: blur(10px) saturate(120%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(220, 220, 220, 0.3) !important;
+}
+
+/* Force dark mode backgrounds */
+.dark body {
+  background-color: hsl(220, 13%, 85%) !important;
+  color: hsl(220, 15%, 25%) !important;
+}
+
+.dark .bg-background {
+  background-color: hsl(220, 13%, 85%) !important;
+}
+
+.dark .bg-card {
+  background-color: hsl(220, 13%, 95%) !important;
+  color: hsl(220, 15%, 20%) !important;
+}
+
+.dark .text-foreground {
+  color: hsl(220, 15%, 25%) !important;
+}
+
+.dark .text-card-foreground {
+  color: hsl(220, 15%, 20%) !important;
+}
+
+.dark .text-muted-foreground {
+  color: hsl(220, 15%, 45%) !important;
 }
 
 /* Fix overflow issues */
