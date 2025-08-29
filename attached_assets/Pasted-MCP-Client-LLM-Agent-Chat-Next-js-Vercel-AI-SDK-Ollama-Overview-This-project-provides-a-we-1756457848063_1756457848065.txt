@@ -1,0 +1,156 @@
+MCP Client + LLM Agent Chat (Next.js + Vercel AI SDK + Ollama)
+Overview
+This project provides a web-based interface for connecting to remote Model Context Protocol (MCP) servers and executing tools either manually or via an integrated AI-powered chat agent.
+
+The system is designed around stateless connections for simplicity, resiliency, and compatibility with serverless environments. It supports running local LLMs via Ollama so users can use models like llama3.2:1b completely offline.
+
+Features
+Core
+Remote MCP Server Integration: Connect to services like Jira, Confluence, GitHub, Slack, Postgres, and others
+
+AI Chat Agent: Conversational assistant powered by Vercel AI SDK
+
+Local LLMs (Ollama): Run models such as llama3.2:1b locally, no external API required
+
+Tool Discovery & Execution: Browse and execute available MCP tools
+
+Permission System: Multi-level execution permissions with risk categorization
+
+Real-Time Sync: UI updates instantly when tools or configurations change
+
+User Interface
+Responsive Design: Mobile + desktop support
+
+Dark/Light Mode with OKLCH color palette
+
+Resizable Panels: Split between chat and server control
+
+Inline Permissions available inside the chat interface
+
+Getting Started
+Prerequisites
+Node.js 18+
+
+npm / yarn / pnpm / bun
+
+Ollama installed locally
+
+Install Ollama:
+
+bash
+curl -fsSL https://ollama.com/install.sh | sh
+Environment Variables
+In .env.local, configure your LLM provider:
+
+bash
+AI_PROVIDER=ollama
+OLLAMA_MODEL=llama3.2:1b
+The app will connect to your local Ollama server at http://localhost:11434 by default.
+
+Installation
+bash
+npm install
+
+# Development
+npm run dev
+
+# or alternatives:
+yarn dev
+pnpm dev
+bun dev
+Open http://localhost:3000 in your browser.
+
+Architecture
+Stateless MCP Connection
+Each MCP operation (e.g., testConnection, listTools, callTool) creates a fresh connection, executes the task, and disconnects immediately.
+
+Principles
+No persistent connections
+
+Configurations stored locally (localStorage)
+
+No server-side session caching
+
+Independent requests for reliability & security
+
+Example Pattern
+ts
+export async function callTool(serviceId: string, toolName: string, params: any) {
+  const config = loadServiceConfig(serviceId);
+  const client = new MCPServerClient(config);
+  await client.connect();
+  const result = await client.callTool(toolName, params);
+  await client.disconnect();
+  return result;
+}
+AI Chat System
+Flow
+Input: User sends a message
+
+LLM Reasoning: AI determines if tools should be called
+
+Permission Check: Low/medium/high risk classification
+
+User Approval: Inline prompt for high-risk actions
+
+Execution: Tool runs using stateless MCP client
+
+Integration: Results fed back into the chat loop
+
+Tool Permission Levels
+High Risk → create, delete
+
+Medium Risk → write, send
+
+Low Risk → read, get
+
+Permissions appear as inline dialogs for user approval before execution.
+
+Real-Time Updates
+The UI syncs using custom localStorage events, e.g.:
+
+js
+window.dispatchEvent(new CustomEvent("localStorageChange", {
+  detail: { 
+    key: "mcp-client-tool-selection",
+    newValue: JSON.stringify(selections)
+  }
+}));
+This guarantees immediate updates across tabs/components.
+
+Project Structure
+text
+app/
+  ├── actions/               # Server-side actions (MCP ops, chat)
+  ├── api/                   # API routes
+  ├── types/                 # TS types
+  └── utils/                 # Hooks, storage, tool management
+components/
+  ├── ui/                    # shadcn/ui components
+  ├── chat-panel.tsx         # Chat interface
+  ├── service-tabs.tsx       # MCP service tabs
+  ├── server-configuration.tsx # MCP server setup
+  ├── available-actions.tsx  # Tool discovery
+  └── tool-interface.tsx     # Manual tool execution
+Technology Stack
+Frontend Framework: Next.js 14+ (App Router)
+
+AI Runtime: Vercel AI SDK
+
+LLM Provider: Ollama (llama3.2:1b as default)
+
+Styles & UI: Tailwind CSS + shadcn/ui
+
+Typed Safety: TypeScript + Zod
+
+State: Browser storage w/ custom event system
+
+Usage
+Config MCP Servers
+Open Service Tabs → add new connection
+
+Enter URL + optional bearer token
+
+Test connection
+
+Browse available tools
