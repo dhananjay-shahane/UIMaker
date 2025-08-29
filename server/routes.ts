@@ -85,8 +85,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: "user",
       });
 
-      // Initialize Ollama client
-      const ollama = new Ollama({ host: 'http://localhost:11434' });
+      // Initialize Ollama client using environment variables
+      const ollamaHost = process.env.LOCAL_LLM_BASE_URL || 'http://localhost:11434';
+      const ollamaModel = process.env.LOCAL_LLM_MODEL || 'llama3.2:1b';
+      const ollama = new Ollama({ host: ollamaHost });
       
       // Prepare system prompt for MCP context
       const systemPrompt = `You are an AI assistant that helps users interact with various services through the Model Context Protocol (MCP). You can help users with tasks related to GitHub, Jira, Confluence, Slack, Database operations, and Cloud services.
@@ -97,9 +99,9 @@ ${selectedTools && selectedTools.length > 0 ? `Available tools: ${selectedTools.
 Be helpful, concise, and ask clarifying questions when needed to better assist the user.`;
 
       try {
-        // Call Ollama with llama3.2:1b model
+        // Call Ollama with configured model
         const response = await ollama.chat({
-          model: 'llama3.2:1b',
+          model: ollamaModel,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: message }
@@ -120,12 +122,19 @@ Be helpful, concise, and ask clarifying questions when needed to better assist t
         console.error('Ollama error:', ollamaError);
         
         // Fallback response if Ollama is not available
-        const fallbackResponse = `I'm having trouble connecting to the local AI model. Please make sure Ollama is running with the llama3.2:1b model.
+        const fallbackResponse = `I'm having trouble connecting to the AI model at ${ollamaHost}. 
 
-To start Ollama:
-1. Install Ollama: curl -fsSL https://ollama.com/install.sh | sh
-2. Pull the model: ollama pull llama3.2:1b
-3. Ensure Ollama is running: ollama serve
+To fix this:
+
+**If using local Ollama:**
+1. Make sure Ollama is running: \`ollama serve\`
+2. Pull the model: \`ollama pull ${ollamaModel}\`
+
+**If using Replit (recommended):**
+1. Use ngrok to tunnel your local Ollama:
+   - Install ngrok: \`brew install ngrok\`
+   - Run: \`ngrok http 11434\`
+   - Update your .env LOCAL_LLM_BASE_URL with the ngrok URL
 
 Your message: "${message}"
 
