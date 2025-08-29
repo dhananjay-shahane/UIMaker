@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2 } from "lucide-react";
+import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2, Copy, Code } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import type { ChatMessage, LLMModel } from "@/types/mcp";
 
@@ -32,8 +33,10 @@ export function LeftSidebar({
 }: LeftSidebarProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isResizing, setIsResizing] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -97,6 +100,71 @@ export function LeftSidebar({
     return dateObj.toLocaleTimeString();
   };
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied to clipboard",
+        description: "Message content copied successfully",
+      });
+    } catch (err) {
+      toast({
+        title: "Copy failed",
+        description: "Could not copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const detectCodeBlocks = (content: string) => {
+    const codeBlockRegex = /```[\s\S]*?```/g;
+    return codeBlockRegex.test(content);
+  };
+
+  const renderMessageContent = (content: string, isAssistant: boolean) => {
+    if (isAssistant && detectCodeBlocks(content)) {
+      const parts = content.split(/(```[\s\S]*?```)/g);
+      return (
+        <div className="space-y-2">
+          {parts.map((part, index) => {
+            if (part.startsWith('```') && part.endsWith('```')) {
+              const code = part.slice(3, -3).trim();
+              const lines = code.split('\n');
+              const language = lines[0] || '';
+              const codeContent = lines.slice(1).join('\n') || lines[0];
+              
+              return (
+                <div key={index} className="bg-slate-900 rounded-lg p-3 border">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Code className="h-3 w-3" />
+                      <span className="text-xs text-slate-400">{language || 'code'}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(codeContent)}
+                      className="h-6 w-6 p-0 text-slate-400 hover:text-white"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <pre className="text-sm text-slate-100 overflow-x-auto">
+                    <code>{codeContent}</code>
+                  </pre>
+                </div>
+              );
+            } else {
+              return <p key={index} className="text-sm leading-relaxed break-words whitespace-pre-wrap">{part}</p>;
+            }
+          })}
+        </div>
+      );
+    }
+    
+    return <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{content}</p>;
+  };
+
   return (
     <div 
       ref={sidebarRef}
@@ -116,7 +184,12 @@ export function LeftSidebar({
             >
               {config.darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="sm" data-testid="button-settings">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowSettings(!showSettings)}
+              data-testid="button-settings"
+            >
               <Settings className="h-4 w-4" />
             </Button>
           </div>
@@ -139,18 +212,18 @@ export function LeftSidebar({
             value={config.selectedModel} 
             onValueChange={(value) => updateConfig({ selectedModel: value })}
           >
-            <SelectTrigger className="h-10" data-testid="select-llm-model">
+            <SelectTrigger className="h-10 bg-background border-input" data-testid="select-llm-model">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ollama-llama3.2">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  Local LLM (Ollama)
-                </div>
-              </SelectItem>
-              <SelectItem value="openai-gpt4">OpenAI GPT-4</SelectItem>
-              <SelectItem value="anthropic-claude">Anthropic Claude</SelectItem>
+            <SelectContent className="bg-popover backdrop-blur-sm border-border z-50">
+              {models.map((model) => (
+                <SelectItem key={model.id} value={model.id}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    {model.name}
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           
@@ -162,6 +235,7 @@ export function LeftSidebar({
               data-testid="button-start-chat"
             >
               <Circle className="h-3 w-3 mr-1" />
+              Start
             </Button>
             <Button 
               variant="secondary" 
@@ -170,8 +244,30 @@ export function LeftSidebar({
               data-testid="button-stop-chat"
             >
               <Square className="h-3 w-3 mr-1" />
+              Stop
             </Button>
           </div>
+          
+          {showSettings && (
+            <div className="p-3 bg-muted/50 rounded-lg border">
+              <h4 className="text-sm font-medium mb-2">Settings</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span>Dark Mode</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={toggleTheme}
+                  >
+                    {config.darkMode ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Model: {models.find(m => m.id === config.selectedModel)?.name || 'Unknown'}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -181,30 +277,44 @@ export function LeftSidebar({
           {messages.map((message) => (
             <div 
               key={message.id} 
-              className={`p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 max-w-full ${
+              className={`group relative p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 max-w-full ${
                 message.type === "user" 
-                  ? "bg-primary text-primary-foreground ml-8" 
-                  : "bg-muted mr-8"
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white ml-8 shadow-md" 
+                  : "bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 mr-8 border shadow-sm"
               }`}
               data-testid={`message-${message.type}-${message.id}`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.type === "user" 
-                    ? "bg-primary-foreground/20" 
-                    : "bg-primary/20"
+                    ? "bg-white/20 backdrop-blur-sm" 
+                    : "bg-blue-500/10 border border-blue-200 dark:border-blue-800"
                 }`}>
                   {message.type === "user" ? (
-                    <span className="text-xs font-bold">U</span>
+                    <span className="text-sm font-bold text-white">U</span>
                   ) : (
-                    <Bot className="h-4 w-4" />
+                    <Bot className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{message.content}</p>
-                  <span className="text-xs opacity-70 mt-2 block">
-                    {formatTime(message.timestamp)}
-                  </span>
+                  {renderMessageContent(message.content, message.type === "assistant")}
+                  <div className="flex items-center justify-between mt-2">
+                    <span className={`text-xs ${
+                      message.type === "user" ? "text-white/70" : "text-slate-500 dark:text-slate-400"
+                    }`}>
+                      {formatTime(message.timestamp)}
+                    </span>
+                    {message.type === "assistant" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(message.content)}
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -212,15 +322,15 @@ export function LeftSidebar({
           
           {/* AI Thinking Indicator */}
           {isSending && (
-            <div className="p-4 rounded-lg bg-muted mr-8 animate-in fade-in-0 slide-in-from-bottom-2">
+            <div className="p-4 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 mr-8 border shadow-sm animate-in fade-in-0 slide-in-from-bottom-2">
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/20">
-                  <Bot className="h-4 w-4" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-500/10 border border-blue-200 dark:border-blue-800">
+                  <Bot className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">AI is thinking...</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm text-slate-600 dark:text-slate-300">AI is thinking...</span>
                   </div>
                 </div>
               </div>
@@ -230,7 +340,7 @@ export function LeftSidebar({
       </ScrollArea>
 
       {/* Chat Input */}
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm">
         <div className="flex gap-3">
           <Input
             type="text"
@@ -239,13 +349,13 @@ export function LeftSidebar({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isSending}
-            className="flex-1 h-12"
+            className="flex-1 h-12 bg-background/80 border-input focus:border-primary"
             data-testid="input-chat-message"
           />
           <Button 
             onClick={handleSendMessage}
             disabled={isSending || !inputMessage.trim()}
-            className="h-12 px-4"
+            className="h-12 px-4 bg-primary hover:bg-primary/90"
             data-testid="button-send-message"
           >
             {isSending ? (
