@@ -35,7 +35,7 @@ export function LeftSidebar({
   const [inputMessage, setInputMessage] = useState("");
   const [isResizing, setIsResizing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [useTextarea, setUseTextarea] = useState(false);
+  const [useTextarea, setUseTextarea] = useState(true); // Always use textarea for better UX
   const sidebarRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -99,12 +99,7 @@ export function LeftSidebar({
     const value = e.target.value;
     setInputMessage(value);
     
-    // Switch to textarea if content has multiple lines or is long
-    if (value.includes('\n') || value.length > 100) {
-      setUseTextarea(true);
-    } else if (value.length < 50 && !value.includes('\n')) {
-      setUseTextarea(false);
-    }
+    // Always use textarea for better UX - removed switching logic
   };
 
   const formatTime = (date: Date | string) => {
@@ -172,14 +167,14 @@ export function LeftSidebar({
                 </div>
               );
             } else {
-              return <p key={index} className="text-sm leading-relaxed break-words whitespace-pre-wrap">{part}</p>;
+              return <p key={index} className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden">{part}</p>;
             }
           })}
         </div>
       );
     }
     
-    return <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{content}</p>;
+    return <p className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden">{content}</p>;
   };
 
   return (

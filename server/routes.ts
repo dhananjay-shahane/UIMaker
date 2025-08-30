@@ -6,24 +6,35 @@ import { z } from "zod";
 import { Ollama } from "ollama";
 import { testMCPConnection, callMCPToolWithConfig, listMCPToolsWithConfig, listMCPPromptsWithConfig, listMCPResourcesWithConfig } from "./mcp-actions";
 
-// Helper function to get live MCP server information from recent activity
-async function getLiveMCPServerInfo() {
-  // For now, return information about known active servers based on logs
-  // In a production app, this would track active connections
-  const knownServers = [
-    {
-      name: 'Cairo Smart Contracts',
-      url: 'https://mcp.zeppelin.com/contracts/cairo',
-      tools: ['cairo-erc20', 'cairo-erc721', 'cairo-erc1155', 'cairo-account', 'cairo-multisig', 'cairo-governor', 'cairo-vesting', 'cairo-custom']
-    },
-    {
-      name: 'Javadocs API',
-      url: 'https://www.javadocs.dev/mcp',
-      tools: ['get_latest_version', 'get_javadoc_content_list', 'get_javadoc_symbol_contents']
-    }
-  ];
+// Global storage for tracking successful MCP connections
+const connectedServers = new Map<string, { name: string; url: string; tools: string[]; lastSeen: Date }>();
+
+// Helper function to track successful MCP connections
+function trackMCPConnection(url: string, tools: any[]) {
+  const name = url.includes('zeppelin') ? 'Cairo Smart Contracts' : 
+               url.includes('javadocs') ? 'Javadocs API' :
+               url.includes('findadomain') ? 'Find-A-Domain' :
+               url;
   
-  return knownServers;
+  connectedServers.set(url, {
+    name,
+    url,
+    tools: tools.map(t => t.name),
+    lastSeen: new Date()
+  });
+}
+
+// Helper function to get currently connected MCP servers
+function getConnectedMCPServers() {
+  // Remove servers not seen in last 5 minutes
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  for (const [url, server] of Array.from(connectedServers.entries())) {
+    if (server.lastSeen < fiveMinutesAgo) {
+      connectedServers.delete(url);
+    }
+  }
+  
+  return Array.from(connectedServers.values());
 }
 import { MCPHttpConfig } from "@shared/mcp-types";
 
@@ -112,47 +123,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ollamaModel = process.env.LOCAL_LLM_MODEL || 'llama3.2:1b';
       const ollama = new Ollama({ host: ollamaHost });
       
-      // Get actual configured MCP services and their tools for dynamic prompt
-      let configuredServices = [];
-      let availableToolsInfo = [];
+      // Get real-time connected MCP servers for dynamic prompt
+      const connectedMCPServers = getConnectedMCPServers();
       
-      try {
-        // First try to get services from storage
-        const services = await storage.getServices();
-        configuredServices = services.filter(s => s.connected);
+      // Create dynamic system prompt based on actually connected MCP services
+      const servicesList = connectedMCPServers.length > 0 
+        ? connectedMCPServers.map(s => s.name).join(', ') 
+        : 'No MCP services currently connected';
         
-        // Get tool information for each connected service
-        for (const service of configuredServices) {
-          const tools = await storage.getToolsByService(service.id!);
-          if (tools.length > 0) {
-            availableToolsInfo.push(`${service.name}: ${tools.map(t => t.name).join(', ')}`);
-          }
-        }
-        
-        // If no services in storage, get live server info
-        if (configuredServices.length === 0) {
-          const liveServers = await getLiveMCPServerInfo();
-          configuredServices = liveServers.map(server => ({ name: server.name }));
-          availableToolsInfo = liveServers.map(server => 
+      const toolsList = connectedMCPServers.length > 0 
+        ? `\n\nAvailable tools by service:\n${connectedMCPServers.map(server => 
             `${server.name}: ${server.tools.join(', ')}`
-          );
-        }
-      } catch (error) {
-        console.error('Error fetching services for chat context:', error);
-      }
-      
-      // Create dynamic system prompt based on actual MCP services
-      const servicesList = configuredServices.length > 0 
-        ? configuredServices.map(s => s.name).join(', ') 
-        : 'No MCP services currently configured';
-        
-      const toolsList = availableToolsInfo.length > 0 
-        ? `\n\nAvailable tools by service:\n${availableToolsInfo.join('\n')}` 
+          ).join('\n')}` 
         : '';
         
-      const systemPrompt = `You are an AI assistant that helps users interact with various services through the Model Context Protocol (MCP). 
+      const systemPrompt = `You are an AI assistant that helps users interact with Model Context Protocol (MCP) services. 
 
-Currently available MCP services: ${servicesList}
+Currently connected MCP services: ${servicesList}
 ${serviceId ? `\nCurrently selected service: ${serviceId}` : ''}
 ${selectedTools && selectedTools.length > 0 ? `\nSelected tools: ${selectedTools.join(', ')}` : ''}${toolsList}
 
@@ -246,6 +233,11 @@ I can help you with MCP services once the connection is restored.`;
       
       const config = configSchema.parse(req.body);
       const result = await testMCPConnection(config);
+      
+      // Track successful connections for chat context
+      if (result.success && result.tools) {
+        trackMCPConnection(config.url, result.tools);
+      }
       
       res.json(result);
     } catch (error) {

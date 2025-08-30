@@ -6,7 +6,10 @@ import {
   MessageSquare, 
   Database, 
   Cloud,
-  Settings 
+  Settings,
+  Globe,
+  Search,
+  Code
 } from "lucide-react";
 import type { MCPService } from "@/types/mcp";
 
@@ -24,6 +27,10 @@ const serviceIcons = {
   database: Database,
   cloud: Cloud,
   configuration: Settings,
+  cairo: Code,
+  javadocs: Book,
+  'find-a-domain': Globe,
+  domain: Globe,
 };
 
 const serviceColors = {
@@ -34,6 +41,10 @@ const serviceColors = {
   database: "text-green-500",
   cloud: "text-blue-400",
   configuration: "text-orange-500",
+  cairo: "text-orange-600",
+  javadocs: "text-red-500",
+  'find-a-domain': "text-green-600",
+  domain: "text-green-600",
 };
 
 export function ServiceTabs({ services, selectedService, onSelectService }: ServiceTabsProps) {
