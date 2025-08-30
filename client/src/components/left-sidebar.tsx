@@ -320,7 +320,7 @@ export function LeftSidebar({
 
       {/* Chat Messages */}
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 overflow-hidden no-scrollbar">
-        <div className="space-y-4 pr-2">
+        <div className="space-y-4 pr-2 max-w-full">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bot className="h-12 w-12 text-blue-600 dark:text-blue-500 mb-4" />
@@ -333,10 +333,10 @@ export function LeftSidebar({
           {messages.map((message) => (
             <div 
               key={message.id} 
-              className={`chat-message group relative p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 max-w-full ${
+              className={`chat-message group relative p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 ${
                 message.type === "user" 
-                  ? "bg-gray-100 dark:bg-gray-200 text-black dark:text-gray-800 ml-8 shadow-md border-2 border-gray-300 dark:border-gray-400" 
-                  : "bg-white dark:bg-gray-50 text-black dark:text-gray-800 mr-8 border-2 border-gray-200 dark:border-gray-300 shadow-sm"
+                  ? "bg-gray-100 dark:bg-gray-200 text-black dark:text-gray-800 ml-8 mr-2 shadow-md border-2 border-gray-300 dark:border-gray-400" 
+                  : "bg-white dark:bg-gray-50 text-black dark:text-gray-800 mr-8 ml-2 border-2 border-gray-200 dark:border-gray-300 shadow-sm"
               }`}
               data-testid={`message-${message.type}-${message.id}`}
             >
@@ -352,7 +352,7 @@ export function LeftSidebar({
                     <Bot className="h-4 w-4 text-blue-600 dark:text-blue-500" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   {renderMessageContent(message.content, message.type === "assistant", message.isThinking)}
                   <div className="flex items-center justify-between mt-2">
                     <span className={`text-xs ${

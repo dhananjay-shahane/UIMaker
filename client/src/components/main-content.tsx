@@ -11,7 +11,7 @@ interface MainContentProps {
   services: MCPService[];
   updateConfig: (updates: any) => void;
   toggleToolSelection: (toolId: string, riskLevel: "low" | "medium" | "high") => void;
-  deselectAllTools: () => void;
+  deselectAllTools: (tools?: any[]) => void;
   refreshService: () => void;
   testConnection: (serviceId: string) => void;
   updateService: (data: { serviceId: string; config: any }) => void;

@@ -19,7 +19,7 @@ interface ConfiguredServerViewProps {
   server: ConfiguredServer;
   selectedTools: Record<string, boolean>;
   onToggleToolSelection: (toolId: string, riskLevel: "low" | "medium" | "high") => void;
-  onDeselectAll: () => void;
+  onDeselectAll: (tools?: any[]) => void;
   onRefresh: () => void;
   onRemoveServer?: (serverId: string) => void;
 }
@@ -149,7 +149,7 @@ export function ConfiguredServerView({
               </CardTitle>
               <div className="flex gap-2">
                 <Button 
-                  onClick={onDeselectAll} 
+                  onClick={() => onDeselectAll(tools)} 
                   variant="outline" 
                   size="sm"
                   data-testid="button-deselect-all"

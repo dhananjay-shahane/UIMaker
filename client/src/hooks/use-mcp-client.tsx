@@ -177,9 +177,24 @@ export function useMCPClient() {
     setPermissionRequest(null);
   }, []);
 
-  const deselectAllTools = useCallback(() => {
-    updateConfig({ selectedTools: {} });
-  }, [updateConfig]);
+  const deselectAllTools = useCallback((currentServerTools?: any[]) => {
+    const hasAnySelected = Object.values(config.selectedTools).some(Boolean);
+    
+    if (hasAnySelected) {
+      // Deselect all
+      updateConfig({ selectedTools: {} });
+    } else {
+      // Select all available tools for current service
+      if (currentServerTools) {
+        const allToolsSelected = currentServerTools.reduce((acc: Record<string, boolean>, tool: any) => {
+          const toolId = `${config.selectedService}:${tool.name}`;
+          acc[toolId] = true;
+          return acc;
+        }, {});
+        updateConfig({ selectedTools: { ...config.selectedTools, ...allToolsSelected } });
+      }
+    }
+  }, [config.selectedTools, config.selectedService, updateConfig]);
 
   const refreshService = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["/api/services"] });
