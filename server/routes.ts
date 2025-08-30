@@ -90,6 +90,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ollamaModel = process.env.LOCAL_LLM_MODEL || 'llama3.2:1b';
       const ollama = new Ollama({ host: ollamaHost });
       
+      // Quick connection test with very short timeout
+      let ollamaAvailable = false;
+      try {
+        // Test if Ollama is available with a 2-second timeout
+        await Promise.race([
+          ollama.list(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Quick test timeout')), 2000))
+        ]);
+        ollamaAvailable = true;
+      } catch (error) {
+        console.log('Ollama not available, will use fallback response');
+        ollamaAvailable = false;
+      }
+      
       // Prepare system prompt for MCP context
       const systemPrompt = `You are an AI assistant that helps users interact with various services through the Model Context Protocol (MCP). You can help users with tasks related to GitHub, Jira, Confluence, Slack, Database operations, and Cloud services.
 
