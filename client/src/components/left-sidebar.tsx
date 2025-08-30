@@ -132,7 +132,8 @@ export function LeftSidebar({
 
   const detectCodeBlocks = (content: string) => {
     const codeBlockRegex = /```[\s\S]*?```/g;
-    return codeBlockRegex.test(content);
+    const singleLineCodeRegex = /`[^`\n]+`/g;
+    return codeBlockRegex.test(content) || (content.includes('`') && singleLineCodeRegex.test(content));
   };
 
   const renderMarkdownText = (text: string) => {
@@ -164,8 +165,19 @@ export function LeftSidebar({
       );
     }
 
-    if (isAssistant && detectCodeBlocks(content)) {
-      const parts = content.split(/(```[\s\S]*?```)/g);
+    if (isAssistant && content.includes('`')) {
+      // Handle both triple backticks and single backticks
+      let processedContent = content;
+      
+      // First, handle single backtick code that should be multi-line
+      processedContent = processedContent.replace(/`([^`]*(?:\n[^`]*)*)/g, (match, code) => {
+        if (code.includes('\n') || code.length > 50) {
+          return '```\n' + code + '\n```';
+        }
+        return match;
+      });
+      
+      const parts = processedContent.split(/(```[\s\S]*?```)/g);
       return (
         <div className="space-y-2">
           {parts.map((part, index) => {
@@ -176,7 +188,7 @@ export function LeftSidebar({
               const codeContent = lines.slice(1).join('\n') || lines[0];
               
               return (
-                <div key={index} className="code-block">
+                <div key={index} className="code-block bg-gray-900 dark:bg-gray-800 rounded-lg p-4 my-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Code className="h-3 w-3 text-slate-400" />
@@ -197,7 +209,7 @@ export function LeftSidebar({
                 </div>
               );
             } else {
-              return <div key={index} className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden" dangerouslySetInnerHTML={{ __html: renderMarkdownText(part) }} />;
+              return <div key={index} className="text-sm leading-relaxed break-words whitespace-pre-wrap overflow-hidden" dangerouslySetInnerHTML={{ __html: renderMarkdownText(part) }} />;
             }
           })}
         </div>
