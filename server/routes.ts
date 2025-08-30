@@ -111,13 +111,14 @@ Be helpful, concise, and ask clarifying questions when needed to better assist t
             options: {
               temperature: 0.7,
               top_p: 0.9,
-              num_predict: 500, // Limit response length for faster generation
+              num_predict: 200, // Further reduced for faster responses
               stop: ['\n\n\n'], // Stop at triple newlines to prevent overly long responses
+              num_ctx: 1024, // Reduce context window for faster processing
             }
           }),
-          // Add 15 second timeout to prevent very slow responses
+          // Add 8 second timeout to prevent very slow responses
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Response timeout')), 15000)
+            setTimeout(() => reject(new Error('Response timeout')), 8000)
           )
         ]) as any;
 
