@@ -18,26 +18,7 @@ export function useMCPClient() {
     };
   });
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      content: "Welcome to MCP Client! I can help you interact with various services through the Model Context Protocol. What would you like to do?",
-      timestamp: new Date(Date.now() - 2 * 60 * 1000),
-      type: "assistant"
-    },
-    {
-      id: "2", 
-      content: "Can you help me check the available GitHub actions?",
-      timestamp: new Date(Date.now() - 1 * 60 * 1000),
-      type: "user"
-    },
-    {
-      id: "3",
-      content: "I can see you have GitHub configured. I found several available actions including creating issues, pull requests, and listing branches. Would you like me to help you execute any of these?",
-      timestamp: new Date(Date.now() - 30 * 1000),
-      type: "assistant"
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const [permissionRequest, setPermissionRequest] = useState<PermissionRequest | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(320);
