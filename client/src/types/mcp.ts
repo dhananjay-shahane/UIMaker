@@ -23,6 +23,7 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   type: "user" | "assistant";
+  isThinking?: boolean;
 }
 
 export interface LLMModel {

@@ -75,11 +75,16 @@ export function useMCPClient() {
       return response.json();
     },
     onSuccess: (data) => {
-      setMessages(prev => [...prev, data.response]);
+      setMessages(prev => {
+        // Remove the thinking message and add the real response
+        const withoutThinking = prev.filter(msg => !msg.isThinking);
+        return [...withoutThinking, data.response];
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/services"] });
       setAbortController(null);
     },
     onError: () => {
+      setMessages(prev => prev.filter(msg => !msg.isThinking));
       setAbortController(null);
     }
   });
@@ -117,7 +122,16 @@ export function useMCPClient() {
       timestamp: new Date(),
       type: "user"
     };
-    setMessages(prev => [...prev, userMessage]);
+    
+    const thinkingMessage: ChatMessage = {
+      id: `thinking-${Date.now()}`,
+      content: "AI is thinking...",
+      timestamp: new Date(),
+      type: "assistant",
+      isThinking: true
+    };
+    
+    setMessages(prev => [...prev, userMessage, thinkingMessage]);
     sendMessageMutation.mutate(content);
   }, [sendMessageMutation]);
 

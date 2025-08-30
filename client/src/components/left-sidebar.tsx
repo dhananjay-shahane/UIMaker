@@ -135,7 +135,20 @@ export function LeftSidebar({
     return codeBlockRegex.test(content);
   };
 
-  const renderMessageContent = (content: string, isAssistant: boolean) => {
+  const renderMessageContent = (content: string, isAssistant: boolean, isThinking?: boolean) => {
+    if (isThinking) {
+      return (
+        <div className="flex items-center gap-2">
+          <div className="flex space-x-1">
+            <div className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+            <div className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-bounce"></div>
+          </div>
+          <span className="text-sm text-blue-600 dark:text-blue-500 italic">{content}</span>
+        </div>
+      );
+    }
+
     if (isAssistant && detectCodeBlocks(content)) {
       const parts = content.split(/(```[\s\S]*?```)/g);
       return (
@@ -319,14 +332,14 @@ export function LeftSidebar({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  {renderMessageContent(message.content, message.type === "assistant")}
+                  {renderMessageContent(message.content, message.type === "assistant", message.isThinking)}
                   <div className="flex items-center justify-between mt-2">
                     <span className={`text-xs ${
                       message.type === "user" ? "text-gray-600 dark:text-gray-700" : "text-gray-500 dark:text-gray-600"
                     }`}>
                       {formatTime(message.timestamp)}
                     </span>
-                    {message.type === "assistant" && (
+                    {message.type === "assistant" && !message.isThinking && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -341,23 +354,6 @@ export function LeftSidebar({
               </div>
             </div>
           ))}
-          
-          {/* AI Thinking Indicator */}
-          {isSending && (
-            <div className="chat-message p-4 rounded-lg bg-white dark:bg-gray-50 text-black dark:text-gray-800 mr-8 border-2 border-gray-200 dark:border-gray-300 shadow-sm animate-in fade-in-0 slide-in-from-bottom-2">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-200 border-2 border-gray-300 dark:border-gray-400">
-                  <Bot className="h-4 w-4 text-blue-600 dark:text-blue-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-500" />
-                    <span className="text-sm text-black dark:text-gray-800">AI is thinking...</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </ScrollArea>
 
