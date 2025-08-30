@@ -90,20 +90,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ollamaModel = process.env.LOCAL_LLM_MODEL || 'llama3.2:1b';
       const ollama = new Ollama({ host: ollamaHost });
       
-      // Quick connection test with very short timeout
-      let ollamaAvailable = false;
-      try {
-        // Test if Ollama is available with a 2-second timeout
-        await Promise.race([
-          ollama.list(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Quick test timeout')), 2000))
-        ]);
-        ollamaAvailable = true;
-      } catch (error) {
-        console.log('Ollama not available, will use fallback response');
-        ollamaAvailable = false;
-      }
-      
       // Prepare system prompt for MCP context
       const systemPrompt = `You are an AI assistant that helps users interact with various services through the Model Context Protocol (MCP). You can help users with tasks related to GitHub, Jira, Confluence, Slack, Database operations, and Cloud services.
 
@@ -113,7 +99,7 @@ ${selectedTools && selectedTools.length > 0 ? `Available tools: ${selectedTools.
 Be helpful, concise, and ask clarifying questions when needed to better assist the user.`;
 
       try {
-        // Call Ollama with configured model and optimized settings for faster responses
+        // Call Ollama with configured model and optimized settings for ngrok connection
         const response = await Promise.race([
           ollama.chat({
             model: ollamaModel,
@@ -125,14 +111,14 @@ Be helpful, concise, and ask clarifying questions when needed to better assist t
             options: {
               temperature: 0.7,
               top_p: 0.9,
-              num_predict: 200, // Further reduced for faster responses
-              stop: ['\n\n\n'], // Stop at triple newlines to prevent overly long responses
-              num_ctx: 1024, // Reduce context window for faster processing
+              num_predict: 150, // Reduced for faster responses over ngrok
+              stop: ['\n\n\n'], // Stop at triple newlines
+              num_ctx: 512, // Further reduced context for ngrok speed
             }
           }),
-          // Add 8 second timeout to prevent very slow responses
+          // Increase timeout for ngrok tunnel delays
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Response timeout')), 8000)
+            setTimeout(() => reject(new Error('Response timeout')), 20000)
           )
         ]) as any;
 
