@@ -87,6 +87,25 @@ npm run dev
 
 The application will be available at `http://localhost:5000`
 
+#### Windows Users: NODE_ENV Error Fix
+If you encounter the error `'NODE_ENV' is not recognized as an internal or external command`, this is normal! The project uses `cross-env` to handle environment variables across different operating systems automatically. Just run `npm run dev` and it will work correctly.
+
+## Common Installation Issues
+
+### Issue: NODE_ENV not recognized (Windows)
+**Solution:** This is automatically handled by the `cross-env` package. The error message is expected on Windows, but the application will still run correctly.
+
+### Issue: Port 5000 already in use
+**Solution:** 
+1. Stop any other processes using port 5000
+2. Or modify the port in `server/index.ts` if needed
+
+### Issue: Tools not refreshing when switching tabs
+**Solution:** This has been fixed! Tools now automatically refresh when you switch between MCP server tabs.
+
+### Issue: AI showing wrong tools for selected server
+**Solution:** The AI now correctly filters tools based on the selected MCP server tab.
+
 ## Project Structure
 
 ```

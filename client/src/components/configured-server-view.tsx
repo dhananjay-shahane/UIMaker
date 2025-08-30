@@ -57,6 +57,13 @@ export function ConfiguredServerView({
     setIsLoading(false);
   };
 
+  // Refresh tools when server changes (for tab switching)
+  useEffect(() => {
+    setTools(server.tools || []);
+    // Automatically refresh tools when switching to a new server tab
+    handleRefreshTools();
+  }, [server.id]);
+
   const handleRemoveServer = () => {
     removeConfiguredServer(server.id);
     if (onRemoveServer) {
