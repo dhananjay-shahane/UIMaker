@@ -1,5 +1,6 @@
 import { ServiceTabs } from "@/components/service-tabs";
 import { GitHubService } from "@/components/github-service";
+import { ServerConfiguration } from "@/components/server-configuration";
 import type { MCPService } from "@/types/mcp";
 
 interface MainContentProps {
@@ -61,15 +62,40 @@ export function MainContent({
             isTesting={isTesting}
           />
         )}
+
+        {config.selectedService === "configuration" && (
+          <div className="p-6 bg-white dark:bg-gray-300">
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-2 text-black dark:text-gray-800">
+                  MCP Server Configuration
+                </h2>
+                <p className="text-gray-600 dark:text-gray-700">
+                  Configure connections to real Model Context Protocol servers. Connect to services like GitHub, Notion, Linear, Stripe, and more.
+                </p>
+              </div>
+              
+              <div className="grid gap-6">
+                <ServerConfiguration serviceId="github" />
+                <ServerConfiguration serviceId="notion" />
+                <ServerConfiguration serviceId="linear" />
+                <ServerConfiguration serviceId="stripe" />
+                <ServerConfiguration serviceId="custom" />
+              </div>
+            </div>
+          </div>
+        )}
         
-        {config.selectedService !== "github" && (
+        {config.selectedService !== "github" && config.selectedService !== "configuration" && (
           <div className="p-6 bg-white dark:bg-gray-300">
             <div className="text-center py-12">
               <h3 className="text-lg font-medium mb-2 text-black dark:text-gray-800" data-testid="text-service-placeholder">
                 {currentService?.name || "Service"} Configuration
               </h3>
               <p className="text-gray-600 dark:text-gray-700" data-testid="text-service-placeholder-description">
-                This service configuration will be available in a future update.
+                This service configuration will be available in a future update. 
+                <br />
+                Use the Configuration tab to set up real MCP server connections.
               </p>
             </div>
           </div>

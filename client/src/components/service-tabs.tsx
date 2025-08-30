@@ -5,7 +5,8 @@ import {
   Github, 
   MessageSquare, 
   Database, 
-  Cloud 
+  Cloud,
+  Settings 
 } from "lucide-react";
 import type { MCPService } from "@/types/mcp";
 
@@ -22,6 +23,7 @@ const serviceIcons = {
   slack: MessageSquare,
   database: Database,
   cloud: Cloud,
+  configuration: Settings,
 };
 
 const serviceColors = {
@@ -31,13 +33,20 @@ const serviceColors = {
   slack: "text-purple-500",
   database: "text-green-500",
   cloud: "text-blue-400",
+  configuration: "text-orange-500",
 };
 
 export function ServiceTabs({ services, selectedService, onSelectService }: ServiceTabsProps) {
+  // Add Configuration tab to the services
+  const allTabs = [
+    ...services,
+    { id: "configuration", name: "Configuration", description: "Configure MCP Server Connections" }
+  ];
+
   return (
     <div className="border-b-2 border-border bg-card">
       <div className="flex overflow-x-auto">
-        {services.map((service) => {
+        {allTabs.map((service) => {
           const Icon = serviceIcons[service.id as keyof typeof serviceIcons] || List;
           const colorClass = serviceColors[service.id as keyof typeof serviceColors] || "text-foreground";
           const isSelected = service.id === selectedService;

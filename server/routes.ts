@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { insertChatMessageSchema } from "@shared/schema";
 import { z } from "zod";
 import { Ollama } from "ollama";
+import { testMCPConnection, callMCPToolWithConfig, listMCPToolsWithConfig, listMCPPromptsWithConfig, listMCPResourcesWithConfig } from "./mcp-actions";
+import { MCPHttpConfig } from "@shared/mcp-types";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all MCP services
@@ -173,6 +175,111 @@ I can help you with MCP services once the connection is restored.`;
       res.json(messages);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // MCP API endpoints
+  app.post("/api/mcp/test-connection", async (req, res) => {
+    try {
+      const configSchema = z.object({
+        url: z.string().url(),
+        bearerToken: z.string().optional(),
+      });
+      
+      const config = configSchema.parse(req.body);
+      const result = await testMCPConnection(config);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('MCP test connection error:', error);
+      res.status(400).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Invalid request" 
+      });
+    }
+  });
+
+  app.post("/api/mcp/list-tools", async (req, res) => {
+    try {
+      const configSchema = z.object({
+        url: z.string().url(),
+        bearerToken: z.string().optional(),
+      });
+      
+      const config = configSchema.parse(req.body);
+      const result = await listMCPToolsWithConfig(config);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('MCP list tools error:', error);
+      res.status(400).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Invalid request" 
+      });
+    }
+  });
+
+  app.post("/api/mcp/call-tool", async (req, res) => {
+    try {
+      const requestSchema = z.object({
+        config: z.object({
+          url: z.string().url(),
+          bearerToken: z.string().optional(),
+        }),
+        toolName: z.string(),
+        arguments: z.record(z.unknown()).optional(),
+      });
+      
+      const { config, toolName, arguments: args } = requestSchema.parse(req.body);
+      const result = await callMCPToolWithConfig(config, toolName, args || {});
+      
+      res.json(result);
+    } catch (error) {
+      console.error('MCP call tool error:', error);
+      res.status(400).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Invalid request" 
+      });
+    }
+  });
+
+  app.post("/api/mcp/list-prompts", async (req, res) => {
+    try {
+      const configSchema = z.object({
+        url: z.string().url(),
+        bearerToken: z.string().optional(),
+      });
+      
+      const config = configSchema.parse(req.body);
+      const result = await listMCPPromptsWithConfig(config);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('MCP list prompts error:', error);
+      res.status(400).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Invalid request" 
+      });
+    }
+  });
+
+  app.post("/api/mcp/list-resources", async (req, res) => {
+    try {
+      const configSchema = z.object({
+        url: z.string().url(),
+        bearerToken: z.string().optional(),
+      });
+      
+      const config = configSchema.parse(req.body);
+      const result = await listMCPResourcesWithConfig(config);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('MCP list resources error:', error);
+      res.status(400).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Invalid request" 
+      });
     }
   });
 
