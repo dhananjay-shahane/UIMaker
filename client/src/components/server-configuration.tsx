@@ -3,20 +3,14 @@
 import { useState, useEffect } from "react";
 import {
   Server,
-  Globe,
-  ChevronDown,
-  ChevronUp,
   Wifi,
   WifiOff,
   Loader2,
-  Key,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { saveServiceConfig, loadServiceConfig } from "@/utils/mcp-storage";
+import { saveServiceConfig, loadServiceConfig, saveConfiguredServer } from "@/utils/mcp-storage";
 import { MCPHttpConfig } from "@shared/mcp-types";
 
 interface ConnectionStatus {
@@ -27,11 +21,10 @@ interface ConnectionStatus {
 }
 
 interface ServerConfigurationProps {
-  serviceId: string;
+  onServerAdded?: (server: { id: string; name: string; config: MCPHttpConfig; tools: unknown[] }) => void;
 }
 
-export function ServerConfiguration({ serviceId }: ServerConfigurationProps) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+export function ServerConfiguration({ onServerAdded }: ServerConfigurationProps) {
   const [isClient, setIsClient] = useState(false);
 
   // Connection status
@@ -39,7 +32,8 @@ export function ServerConfiguration({ serviceId }: ServerConfigurationProps) {
     isTesting: false,
   });
 
-  // HTTP fields
+  // Form fields
+  const [serverName, setServerName] = useState("");
   const [url, setUrl] = useState("");
   const [bearerToken, setBearerToken] = useState("");
 
@@ -48,34 +42,18 @@ export function ServerConfiguration({ serviceId }: ServerConfigurationProps) {
     setIsClient(true);
   }, []);
 
-  // Load saved configuration on mount (only on client)
-  useEffect(() => {
-    if (!isClient) return;
-
-    const savedConfig = loadServiceConfig(serviceId);
-    if (savedConfig) {
-      setUrl(savedConfig.url);
-      setBearerToken(savedConfig.bearerToken || "");
-    }
-  }, [serviceId, isClient]);
-
   // Render placeholder during server-side rendering and initial client mount
   if (!isClient) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-1/4 mb-2"></div>
+      <div className="w-full">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="space-y-3">
             <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse space-y-3">
-            <div className="h-10 bg-gray-200 rounded"></div>
             <div className="h-10 bg-gray-200 rounded"></div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -101,14 +79,31 @@ export function ServerConfiguration({ serviceId }: ServerConfigurationProps) {
       const result = await response.json();
 
       if (result.success) {
+        const newServer = {
+          id: serverName.toLowerCase().replace(/\s+/g, '-') || 'server-' + Date.now(),
+          name: serverName || 'MCP Server',
+          config,
+          tools: result.tools || []
+        };
+
         // Save configuration to localStorage
-        saveServiceConfig(serviceId, config);
+        saveConfiguredServer(newServer);
 
         setConnectionStatus({
           isTesting: false,
           lastTestSuccess: true,
           lastTestTools: result.tools,
         });
+
+        // Notify parent component
+        if (onServerAdded) {
+          onServerAdded(newServer);
+        }
+
+        // Clear form after successful connection
+        setServerName("");
+        setUrl("");
+        setBearerToken("");
       } else {
         setConnectionStatus({
           isTesting: false,
@@ -126,132 +121,87 @@ export function ServerConfiguration({ serviceId }: ServerConfigurationProps) {
     }
   };
 
-  const getPrefilledUrls = () => {
-    return [
-      { name: "GitHub", url: "https://api.githubcopilot.com/mcp" },
-      { name: "Notion", url: "https://mcp.notion.com/sse" },
-      { name: "Linear", url: "https://mcp.linear.app/sse" },
-      { name: "Asana", url: "https://mcp.asana.com/sse" },
-      { name: "Stripe", url: "https://mcp.stripe.com/" },
-      { name: "Cloudflare Workers", url: "https://bindings.mcp.cloudflare.com/sse" },
-      { name: "Vercel", url: "https://mcp.vercel.com/" },
-      { name: "Find-A-Domain (Open)", url: "https://api.findadomain.dev/mcp" },
-      { name: "Hugging Face (Open)", url: "https://hf.co/mcp" },
-      { name: "Remote MCP (Open)", url: "https://mcp.remote-mcp.com" },
-    ];
-  };
-
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Server className="text-primary" size={20} />
-            <CardTitle className="text-lg">
-              Server Configuration
-            </CardTitle>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Connection Status Indicator */}
+    <div className="w-full bg-white border border-gray-200 rounded-lg">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <Server className="text-gray-600" size={20} />
+          <h3 className="text-lg font-semibold text-gray-900">
+            Server Configuration
+          </h3>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Connection Status Indicator */}
+          {connectionStatus.lastTestSuccess && (
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                {connectionStatus.isTesting ? (
-                  <Loader2 className="w-3 h-3 text-primary animate-spin" />
-                ) : connectionStatus.lastTestSuccess ? (
-                  <Wifi className="w-3 h-3 text-green-500" />
-                ) : (
-                  <WifiOff className="w-3 h-3 text-red-500" />
-                )}
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    connectionStatus.lastTestSuccess
-                      ? "bg-green-500"
-                      : connectionStatus.isTesting
-                      ? "bg-blue-500"
-                      : "bg-red-500"
-                  }`}
-                ></div>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {connectionStatus.isTesting
-                  ? "Testing..."
-                  : connectionStatus.lastTestSuccess
-                  ? `Connected (${
-                      connectionStatus.lastTestTools?.length || 0
-                    } tools)`
-                  : connectionStatus.lastTestError
-                  ? "Failed"
-                  : "Not tested"}
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span className="text-sm text-green-600 font-medium">
+                Last test: OK ({connectionStatus.lastTestTools?.length || 0} tools)
               </span>
             </div>
-
-            {/* Test Connection Button */}
-            <Button
-              onClick={handleConnect}
-              disabled={connectionStatus.isTesting || !url}
-              variant={connectionStatus.lastTestSuccess ? "secondary" : "default"}
-              size="sm"
-            >
-              {connectionStatus.isTesting
-                ? "Testing..."
-                : connectionStatus.lastTestSuccess
-                ? "Test Again"
-                : "Test Connection"}
-            </Button>
-
-            <Button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              variant="ghost"
-              size="sm"
-            >
-              {isCollapsed ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronUp size={16} />
-              )}
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-
-      {!isCollapsed && (
-        <CardContent className="space-y-4">
-          {/* Connection Error Message */}
-          {connectionStatus.lastTestError && (
-            <Alert variant="destructive">
-              <WifiOff className="w-4 h-4" />
-              <AlertDescription>
-                <strong>Connection Test Failed</strong>
-                <br />
-                {connectionStatus.lastTestError}
-              </AlertDescription>
-            </Alert>
           )}
 
-          {/* Quick URLs */}
-          <div>
-            <Label className="text-sm font-medium mb-2 block">
-              Quick Select (Popular Servers)
-            </Label>
-            <div className="grid grid-cols-2 gap-2">
-              {getPrefilledUrls().map((preset) => (
-                <Button
-                  key={preset.name}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setUrl(preset.url)}
-                  className="justify-start text-xs"
-                >
-                  {preset.name}
-                </Button>
-              ))}
+          {/* Test Connection Button */}
+          <Button
+            onClick={handleConnect}
+            disabled={connectionStatus.isTesting || !url || !serverName}
+            variant={connectionStatus.lastTestSuccess ? "secondary" : "default"}
+            size="sm"
+            className="px-4 py-2"
+          >
+            {connectionStatus.isTesting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Testing...
+              </>
+            ) : connectionStatus.lastTestSuccess ? (
+              "Test Again"
+            ) : (
+              "Test"
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Form Content */}
+      <div className="p-4 space-y-4">
+        {/* Connection Error Message */}
+        {connectionStatus.lastTestError && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex items-center gap-2">
+              <WifiOff className="w-4 h-4 text-red-500" />
+              <span className="text-sm text-red-700 font-medium">
+                Connection Test Failed
+              </span>
+            </div>
+            <div className="text-sm text-red-600 mt-1">
+              {connectionStatus.lastTestError}
             </div>
           </div>
+        )}
 
-          {/* URL Configuration */}
+        {/* Server Name */}
+        <div>
+          <Label htmlFor="server-name" className="text-sm font-medium text-gray-700 mb-1 block">
+            Server Name
+          </Label>
+          <Input
+            id="server-name"
+            type="text"
+            value={serverName}
+            onChange={(e) => setServerName(e.target.value)}
+            placeholder="Enter server name (e.g., GitHub, Notion)"
+            className="w-full"
+            data-testid="input-server-name"
+          />
+        </div>
+
+        {/* URL and Token Row */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Server URL */}
           <div>
-            <Label htmlFor="mcp-url" className="flex items-center gap-1 text-sm font-medium mb-2">
-              <Globe className="w-4 h-4" />
+            <Label htmlFor="mcp-url" className="text-sm font-medium text-gray-700 mb-1 block">
               Server URL
             </Label>
             <Input
@@ -259,31 +209,29 @@ export function ServerConfiguration({ serviceId }: ServerConfigurationProps) {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://mcp.example.com/sse"
+              placeholder="https://api.github.com/mcp"
+              className="w-full"
               data-testid="input-mcp-url"
             />
           </div>
 
-          {/* Bearer Token Configuration */}
+          {/* Bearer Token */}
           <div>
-            <Label htmlFor="mcp-token" className="flex items-center gap-1 text-sm font-medium mb-2">
-              <Key className="w-4 h-4" />
-              Bearer Token (Optional)
+            <Label htmlFor="mcp-token" className="text-sm font-medium text-gray-700 mb-1 block">
+              Bearer Token
             </Label>
             <Input
               id="mcp-token"
               type="password"
               value={bearerToken}
               onChange={(e) => setBearerToken(e.target.value)}
-              placeholder="Enter authentication token"
+              placeholder="••••••••••••••••••••••••••••••••"
+              className="w-full"
               data-testid="input-mcp-token"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Optional: Used for authentication with servers that require API keys
-            </p>
           </div>
-        </CardContent>
-      )}
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 }

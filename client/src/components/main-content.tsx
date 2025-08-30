@@ -1,7 +1,10 @@
 import { ServiceTabs } from "@/components/service-tabs";
 import { GitHubService } from "@/components/github-service";
 import { ServerConfiguration } from "@/components/server-configuration";
+import { ConfiguredServerView } from "@/components/configured-server-view";
 import type { MCPService } from "@/types/mcp";
+import { useState, useEffect } from "react";
+import { loadConfiguredServers, type ConfiguredServer } from "@/utils/mcp-storage";
 
 interface MainContentProps {
   config: any;
@@ -26,7 +29,47 @@ export function MainContent({
   updateService,
   isTesting
 }: MainContentProps) {
+  const [configuredServers, setConfiguredServers] = useState<ConfiguredServer[]>([]);
+
+  // Load configured servers on mount and listen for changes
+  useEffect(() => {
+    const loadServers = () => {
+      const servers = loadConfiguredServers();
+      setConfiguredServers(servers);
+    };
+
+    loadServers();
+
+    // Listen for storage changes
+    const handleStorageChange = (event: any) => {
+      if (event.detail?.key?.includes('configured-servers')) {
+        loadServers();
+      }
+    };
+
+    window.addEventListener('configuredServersChange', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('configuredServersChange', handleStorageChange);
+    };
+  }, []);
+
+  const handleServerAdded = (server: any) => {
+    setConfiguredServers(prev => [...prev.filter(s => s.id !== server.id), server]);
+    // Switch to the newly added server
+    updateConfig({ selectedService: server.id });
+  };
+
+  const handleRemoveServer = (serverId: string) => {
+    setConfiguredServers(prev => prev.filter(s => s.id !== serverId));
+    // Switch to configuration tab if the removed server was selected
+    if (config.selectedService === serverId) {
+      updateConfig({ selectedService: "configuration" });
+    }
+  };
+
   const currentService = services.find(s => s.id === config.selectedService);
+  const currentConfiguredServer = configuredServers.find(s => s.id === config.selectedService);
 
   return (
     <div className="flex-1 flex flex-col bg-white dark:bg-gray-300 text-black dark:text-gray-800">
@@ -36,33 +79,27 @@ export function MainContent({
           Welcome to MCP Client
         </h1>
         <p className="text-gray-600 dark:text-gray-700 text-base leading-relaxed" data-testid="text-welcome-description">
-          Connect and interact with various services through the Model Context Protocol. 
-          Use the chat interface on the left to communicate with LLMs or manage services directly through the tabs below.
+          Connect and interact with real Model Context Protocol servers. 
+          Use the Configuration tab to add new servers, then select them from the tabs to view available tools.
         </p>
       </div>
 
       {/* Service Tabs */}
       <ServiceTabs
-        services={services}
+        services={[...services, ...configuredServers.map(server => ({
+          id: server.id,
+          name: server.name,
+          description: `Connected MCP Server (${server.tools.length} tools)`,
+          icon: "server",
+          connected: true,
+          tools: server.tools
+        } as any))]}
         selectedService={config.selectedService}
         onSelectService={(serviceId: string) => updateConfig({ selectedService: serviceId })}
       />
 
       {/* Service Content */}
       <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-300 no-scrollbar">
-        {config.selectedService === "github" && (
-          <GitHubService
-            service={currentService}
-            selectedTools={config.selectedTools}
-            onToggleToolSelection={toggleToolSelection}
-            onDeselectAll={deselectAllTools}
-            onRefresh={refreshService}
-            onTestConnection={testConnection}
-            onUpdateService={updateService}
-            isTesting={isTesting}
-          />
-        )}
-
         {config.selectedService === "configuration" && (
           <div className="p-6 bg-white dark:bg-gray-300">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -75,26 +112,29 @@ export function MainContent({
                 </p>
               </div>
               
-              <div className="grid gap-6">
-                <ServerConfiguration serviceId="github" />
-                <ServerConfiguration serviceId="notion" />
-                <ServerConfiguration serviceId="linear" />
-                <ServerConfiguration serviceId="stripe" />
-                <ServerConfiguration serviceId="custom" />
-              </div>
+              <ServerConfiguration onServerAdded={handleServerAdded} />
             </div>
           </div>
         )}
+
+        {currentConfiguredServer && (
+          <ConfiguredServerView
+            server={currentConfiguredServer}
+            selectedTools={config.selectedTools}
+            onToggleToolSelection={toggleToolSelection}
+            onDeselectAll={deselectAllTools}
+            onRefresh={refreshService}
+            onRemoveServer={handleRemoveServer}
+          />
+        )}
         
-        {config.selectedService !== "github" && config.selectedService !== "configuration" && (
+        {!currentConfiguredServer && config.selectedService !== "configuration" && (
           <div className="p-6 bg-white dark:bg-gray-300">
             <div className="text-center py-12">
               <h3 className="text-lg font-medium mb-2 text-black dark:text-gray-800" data-testid="text-service-placeholder">
-                {currentService?.name || "Service"} Configuration
+                No Server Configured
               </h3>
               <p className="text-gray-600 dark:text-gray-700" data-testid="text-service-placeholder-description">
-                This service configuration will be available in a future update. 
-                <br />
                 Use the Configuration tab to set up real MCP server connections.
               </p>
             </div>

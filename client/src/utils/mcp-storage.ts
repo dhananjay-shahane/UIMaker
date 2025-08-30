@@ -186,3 +186,89 @@ export function setToolSelection(serviceId: string, toolName: string, selected: 
   };
   saveToolSelection(newSelection);
 }
+
+/**
+ * Configured servers management
+ */
+const CONFIGURED_SERVERS_KEY = `${STORAGE_PREFIX}-configured-servers`;
+
+export interface ConfiguredServer {
+  id: string;
+  name: string;
+  config: StoredMCPConfig;
+  tools: unknown[];
+  createdAt: string;
+}
+
+/**
+ * Save a configured server
+ */
+export function saveConfiguredServer(server: Omit<ConfiguredServer, 'createdAt'>): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    const configuredServers = loadConfiguredServers();
+    const newServer: ConfiguredServer = {
+      ...server,
+      createdAt: new Date().toISOString()
+    };
+    
+    // Remove existing server with same ID if it exists
+    const updatedServers = configuredServers.filter(s => s.id !== server.id);
+    updatedServers.push(newServer);
+    
+    localStorage.setItem(CONFIGURED_SERVERS_KEY, JSON.stringify(updatedServers));
+    
+    // Dispatch custom event for same-tab listeners
+    window.dispatchEvent(new CustomEvent('configuredServersChange', {
+      detail: { servers: updatedServers }
+    }));
+  } catch (error) {
+    console.error('Failed to save configured server:', error);
+  }
+}
+
+/**
+ * Load all configured servers
+ */
+export function loadConfiguredServers(): ConfiguredServer[] {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  try {
+    const stored = localStorage.getItem(CONFIGURED_SERVERS_KEY);
+    if (stored) {
+      return JSON.parse(stored) as ConfiguredServer[];
+    }
+  } catch (error) {
+    console.error('Failed to load configured servers:', error);
+  }
+
+  return [];
+}
+
+/**
+ * Remove a configured server
+ */
+export function removeConfiguredServer(serverId: string): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    const configuredServers = loadConfiguredServers();
+    const updatedServers = configuredServers.filter(s => s.id !== serverId);
+    
+    localStorage.setItem(CONFIGURED_SERVERS_KEY, JSON.stringify(updatedServers));
+    
+    // Dispatch custom event for same-tab listeners
+    window.dispatchEvent(new CustomEvent('configuredServersChange', {
+      detail: { servers: updatedServers }
+    }));
+  } catch (error) {
+    console.error('Failed to remove configured server:', error);
+  }
+}

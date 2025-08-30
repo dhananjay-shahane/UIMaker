@@ -12,7 +12,7 @@ export function useMCPClient() {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : {
       selectedModel: "ollama-llama3.2",
-      selectedService: "github",
+      selectedService: "configuration",
       selectedTools: {},
       darkMode: false,
     };
