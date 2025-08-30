@@ -75,19 +75,31 @@ export function useMCPClient() {
     }
   }, [config.darkMode]);
 
+  // AbortController for stopping chat requests
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
+      const controller = new AbortController();
+      setAbortController(controller);
+      
       const response = await apiRequest("POST", "/api/chat", {
         message,
         serviceId: config.selectedService,
         selectedTools: Object.keys(config.selectedTools).filter(key => config.selectedTools[key])
-      });
+      }, controller.signal);
+      
+      setAbortController(null);
       return response.json();
     },
     onSuccess: (data) => {
       setMessages(prev => [...prev, data.response]);
       queryClient.invalidateQueries({ queryKey: ["/api/services"] });
+      setAbortController(null);
+    },
+    onError: () => {
+      setAbortController(null);
     }
   });
 
@@ -182,6 +194,13 @@ export function useMCPClient() {
     updateConfig({ darkMode: !config.darkMode });
   }, [config.darkMode, updateConfig]);
 
+  const stopChat = useCallback(() => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    }
+  }, [abortController]);
+
   return {
     config,
     updateConfig,
@@ -199,6 +218,7 @@ export function useMCPClient() {
     deselectAllTools,
     refreshService,
     toggleTheme,
+    stopChat,
     testConnection: testConnectionMutation.mutate,
     updateService: updateServiceMutation.mutate,
     isSending: sendMessageMutation.isPending,

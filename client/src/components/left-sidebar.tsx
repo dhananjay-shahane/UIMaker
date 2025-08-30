@@ -19,6 +19,7 @@ interface LeftSidebarProps {
   updateConfig: (updates: any) => void;
   isSending: boolean;
   onWidthChange: (width: number) => void;
+  stopChat: () => void;
 }
 
 export function LeftSidebar({
@@ -30,7 +31,8 @@ export function LeftSidebar({
   sendMessage,
   updateConfig,
   isSending,
-  onWidthChange
+  onWidthChange,
+  stopChat
 }: LeftSidebarProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isResizing, setIsResizing] = useState(false);
@@ -226,33 +228,6 @@ export function LeftSidebar({
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Theme</p>
-                        <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={toggleTheme}
-                        className="flex items-center gap-2"
-                      >
-                        {config.darkMode ? (
-                          <>
-                            <Sun className="h-3 w-3" />
-                            Light
-                          </>
-                        ) : (
-                          <>
-                            <Moon className="h-3 w-3" />
-                            Dark
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    
-                    <Separator />
-                    
                     <div>
                       <p className="font-medium mb-2">Current Model</p>
                       <p className="text-sm text-muted-foreground">
@@ -405,7 +380,7 @@ export function LeftSidebar({
           )}
           {isSending && (
             <Button 
-              onClick={() => {/* Stop functionality */}}
+              onClick={stopChat}
               variant="outline"
               className="h-12 px-4 shadow-sm hover:shadow-md transition-all duration-200 border-red-300 hover:border-red-400 text-red-600 hover:text-red-700"
               data-testid="button-stop-chat"

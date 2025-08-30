@@ -188,32 +188,11 @@ I can help you interact with these MCP services and execute their available tool
         res.json({ response: responseMessage });
       } catch (ollamaError) {
         console.error('Ollama error:', ollamaError);
-        
-        // Fallback response if Ollama is not available
-        const fallbackResponse = `I'm having trouble connecting to the AI model at ${ollamaHost}. 
-
-To fix this:
-
-**If using local Ollama:**
-1. Make sure Ollama is running: \`ollama serve\`
-2. Pull the model: \`ollama pull ${ollamaModel}\`
-
-**If using Replit (recommended):**
-1. Use ngrok to tunnel your local Ollama:
-   - Install ngrok: \`brew install ngrok\`
-   - Run: \`ngrok http 11434\`
-   - Update your .env LOCAL_LLM_BASE_URL with the ngrok URL
-
-Your message: "${message}"
-
-I can help you with MCP services once the connection is restored.`;
-
-        const responseMessage = await storage.createMessage({
-          content: fallbackResponse,
-          type: "assistant",
+        // Instead of fallback, return proper error response
+        res.status(503).json({ 
+          message: "AI service temporarily unavailable",
+          error: "Connection to AI model failed"
         });
-
-        res.json({ response: responseMessage });
       }
     } catch (error) {
       console.error('Chat API error:', error);

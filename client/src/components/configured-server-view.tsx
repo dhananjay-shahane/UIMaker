@@ -148,8 +148,13 @@ export function ConfiguredServerView({
                 Available Tools ({tools.length})
               </CardTitle>
               <div className="flex gap-2">
-                <Button onClick={onDeselectAll} variant="outline" size="sm">
-                  Deselect All
+                <Button 
+                  onClick={onDeselectAll} 
+                  variant="outline" 
+                  size="sm"
+                  data-testid="button-deselect-all"
+                >
+                  {Object.values(selectedTools).filter(Boolean).length === 0 ? 'Select All' : 'Deselect All'}
                 </Button>
               </div>
             </div>
@@ -165,7 +170,7 @@ export function ConfiguredServerView({
               <div className="grid gap-3">
                 {tools.map((tool: any) => {
                   const toolId = `${server.id}:${tool.name}`;
-                  const isSelected = selectedTools[toolId] ?? true;
+                  const isSelected = selectedTools[toolId] ?? false;
                   const riskLevel = tool.riskLevel || "low";
 
                   return (
