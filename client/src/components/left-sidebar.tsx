@@ -287,6 +287,15 @@ export function LeftSidebar({
       {/* Chat Messages */}
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 overflow-hidden no-scrollbar">
         <div className="space-y-4 pr-2">
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Bot className="h-12 w-12 text-blue-600 dark:text-blue-500 mb-4" />
+              <h3 className="text-lg font-semibold text-black dark:text-gray-800 mb-2">Welcome to MCP Client</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-700 max-w-64">
+                Connect and interact with Model Context Protocol servers. Start by typing a message below!
+              </p>
+            </div>
+          )}
           {messages.map((message) => (
             <div 
               key={message.id} 
