@@ -135,6 +135,21 @@ export function LeftSidebar({
     return codeBlockRegex.test(content);
   };
 
+  const renderMarkdownText = (text: string) => {
+    // Handle bold text (**text** or __text__)
+    let result = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    result = result.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    
+    // Handle italic text (*text* or _text_)
+    result = result.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    result = result.replace(/_(.*?)_/g, '<em>$1</em>');
+    
+    // Handle inline code (`code`)
+    result = result.replace(/`(.*?)`/g, '<code class="bg-gray-100 dark:bg-gray-300 px-1 py-0.5 rounded text-sm font-mono text-black dark:text-gray-800">$1</code>');
+    
+    return result;
+  };
+
   const renderMessageContent = (content: string, isAssistant: boolean, isThinking?: boolean) => {
     if (isThinking) {
       return (
@@ -182,13 +197,19 @@ export function LeftSidebar({
                 </div>
               );
             } else {
-              return <p key={index} className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden">{part}</p>;
+              return <div key={index} className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden" dangerouslySetInnerHTML={{ __html: renderMarkdownText(part) }} />;
             }
           })}
         </div>
       );
     }
     
+    // For assistant messages without code blocks, render markdown
+    if (isAssistant) {
+      return <div className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden" dangerouslySetInnerHTML={{ __html: renderMarkdownText(content) }} />;
+    }
+    
+    // For user messages, keep as plain text
     return <p className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden">{content}</p>;
   };
 
