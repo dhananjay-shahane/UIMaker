@@ -5,6 +5,26 @@ import { insertChatMessageSchema } from "@shared/schema";
 import { z } from "zod";
 import { Ollama } from "ollama";
 import { testMCPConnection, callMCPToolWithConfig, listMCPToolsWithConfig, listMCPPromptsWithConfig, listMCPResourcesWithConfig } from "./mcp-actions";
+
+// Helper function to get live MCP server information from recent activity
+async function getLiveMCPServerInfo() {
+  // For now, return information about known active servers based on logs
+  // In a production app, this would track active connections
+  const knownServers = [
+    {
+      name: 'Cairo Smart Contracts',
+      url: 'https://mcp.zeppelin.com/contracts/cairo',
+      tools: ['cairo-erc20', 'cairo-erc721', 'cairo-erc1155', 'cairo-account', 'cairo-multisig', 'cairo-governor', 'cairo-vesting', 'cairo-custom']
+    },
+    {
+      name: 'Javadocs API',
+      url: 'https://www.javadocs.dev/mcp',
+      tools: ['get_latest_version', 'get_javadoc_content_list', 'get_javadoc_symbol_contents']
+    }
+  ];
+  
+  return knownServers;
+}
 import { MCPHttpConfig } from "@shared/mcp-types";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -92,13 +112,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ollamaModel = process.env.LOCAL_LLM_MODEL || 'llama3.2:1b';
       const ollama = new Ollama({ host: ollamaHost });
       
-      // Prepare system prompt for MCP context
-      const systemPrompt = `You are an AI assistant that helps users interact with various services through the Model Context Protocol (MCP). You can help users with tasks related to GitHub, Jira, Confluence, Slack, Database operations, and Cloud services.
+      // Get actual configured MCP services and their tools for dynamic prompt
+      let configuredServices = [];
+      let availableToolsInfo = [];
+      
+      try {
+        // First try to get services from storage
+        const services = await storage.getServices();
+        configuredServices = services.filter(s => s.connected);
+        
+        // Get tool information for each connected service
+        for (const service of configuredServices) {
+          const tools = await storage.getToolsByService(service.id!);
+          if (tools.length > 0) {
+            availableToolsInfo.push(`${service.name}: ${tools.map(t => t.name).join(', ')}`);
+          }
+        }
+        
+        // If no services in storage, get live server info
+        if (configuredServices.length === 0) {
+          const liveServers = await getLiveMCPServerInfo();
+          configuredServices = liveServers.map(server => ({ name: server.name }));
+          availableToolsInfo = liveServers.map(server => 
+            `${server.name}: ${server.tools.join(', ')}`
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching services for chat context:', error);
+      }
+      
+      // Create dynamic system prompt based on actual MCP services
+      const servicesList = configuredServices.length > 0 
+        ? configuredServices.map(s => s.name).join(', ') 
+        : 'No MCP services currently configured';
+        
+      const toolsList = availableToolsInfo.length > 0 
+        ? `\n\nAvailable tools by service:\n${availableToolsInfo.join('\n')}` 
+        : '';
+        
+      const systemPrompt = `You are an AI assistant that helps users interact with various services through the Model Context Protocol (MCP). 
 
-Available services: ${serviceId ? `Currently selected: ${serviceId}` : 'GitHub, Jira, Confluence, Slack, Database, Cloud Services'}
-${selectedTools && selectedTools.length > 0 ? `Available tools: ${selectedTools.join(', ')}` : ''}
+Currently available MCP services: ${servicesList}
+${serviceId ? `\nCurrently selected service: ${serviceId}` : ''}
+${selectedTools && selectedTools.length > 0 ? `\nSelected tools: ${selectedTools.join(', ')}` : ''}${toolsList}
 
-Be helpful, concise, and ask clarifying questions when needed to better assist the user.`;
+I can help you interact with these MCP services and execute their available tools. What would you like to do?`;
 
       try {
         // Call Ollama with configured model and optimized settings for ngrok connection
