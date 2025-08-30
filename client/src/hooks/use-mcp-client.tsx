@@ -61,15 +61,30 @@ export function useMCPClient() {
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (message: string) => {
+    mutationFn: async (data: { message: string; attachments: File[] }) => {
       const controller = new AbortController();
       setAbortController(controller);
       
-      const response = await apiRequest("POST", "/api/chat", {
-        message,
-        serviceId: config.selectedService,
-        selectedTools: Object.keys(config.selectedTools).filter(key => config.selectedTools[key])
-      }, controller.signal);
+      // Create FormData if we have attachments
+      let requestBody: any;
+      if (data.attachments.length > 0) {
+        const formData = new FormData();
+        formData.append('message', data.message);
+        formData.append('serviceId', config.selectedService);
+        formData.append('selectedTools', JSON.stringify(Object.keys(config.selectedTools).filter(key => config.selectedTools[key])));
+        data.attachments.forEach((file, index) => {
+          formData.append(`attachment_${index}`, file);
+        });
+        requestBody = formData;
+      } else {
+        requestBody = {
+          message: data.message,
+          serviceId: config.selectedService,
+          selectedTools: Object.keys(config.selectedTools).filter(key => config.selectedTools[key])
+        };
+      }
+      
+      const response = await apiRequest("POST", "/api/chat", requestBody, controller.signal);
       
       setAbortController(null);
       return response.json();
@@ -115,10 +130,18 @@ export function useMCPClient() {
     setConfig(prev => ({ ...prev, ...updates }));
   }, []);
 
-  const sendMessage = useCallback((content: string) => {
+  const sendMessage = useCallback((content: string, attachments?: File[]) => {
+    let messageContent = content;
+    
+    // Add file information to message content if files are attached
+    if (attachments && attachments.length > 0) {
+      const fileList = attachments.map(f => `📎 ${f.name} (${(f.size / 1024).toFixed(1)}KB)`).join('\n');
+      messageContent = content + (content ? '\n\n' : '') + fileList;
+    }
+    
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
-      content,
+      content: messageContent,
       timestamp: new Date(),
       type: "user"
     };
@@ -132,7 +155,7 @@ export function useMCPClient() {
     };
     
     setMessages(prev => [...prev, userMessage, thinkingMessage]);
-    sendMessageMutation.mutate(content);
+    sendMessageMutation.mutate({ message: content, attachments: attachments || [] });
   }, [sendMessageMutation]);
 
   const toggleToolSelection = useCallback((toolId: string, riskLevel: "low" | "medium" | "high") => {

@@ -5,6 +5,8 @@ import { insertChatMessageSchema } from "@shared/schema";
 import { z } from "zod";
 import { Ollama } from "ollama";
 import { testMCPConnection, callMCPToolWithConfig, listMCPToolsWithConfig, listMCPPromptsWithConfig, listMCPResourcesWithConfig } from "./mcp-actions";
+import multer from "multer";
+import fs from "fs/promises";
 
 // Global storage for tracking successful MCP connections
 const connectedServers = new Map<string, { name: string; url: string; tools: string[]; lastSeen: Date }>();
@@ -37,6 +39,42 @@ function getConnectedMCPServers() {
   return Array.from(connectedServers.values());
 }
 import { MCPHttpConfig } from "@shared/mcp-types";
+
+// Configure multer for file uploads
+const upload = multer({
+  dest: 'uploads/',
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['application/pdf', 'text/plain', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('File type not supported'));
+    }
+  }
+});
+
+// Helper function to read file content
+async function readFileContent(file: Express.Multer.File): Promise<string> {
+  try {
+    if (file.mimetype.startsWith('text/') || file.mimetype === 'application/pdf') {
+      const content = await fs.readFile(file.path, 'utf-8');
+      // Clean up uploaded file
+      await fs.unlink(file.path).catch(() => {});
+      return content;
+    } else if (file.mimetype.startsWith('image/')) {
+      // For images, return a description
+      return `[Image: ${file.originalname}, Size: ${(file.size / 1024).toFixed(1)}KB]`;
+    }
+    return `[File: ${file.originalname}, Type: ${file.mimetype}, Size: ${(file.size / 1024).toFixed(1)}KB]`;
+  } catch (error) {
+    // Clean up uploaded file on error
+    await fs.unlink(file.path).catch(() => {});
+    throw error;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all MCP services
@@ -102,15 +140,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send chat message and get AI response
-  app.post("/api/chat", async (req, res) => {
+  app.post("/api/chat", upload.any(), async (req, res) => {
     try {
-      const chatSchema = z.object({
-        message: z.string(),
-        serviceId: z.string().optional(),
-        selectedTools: z.array(z.string()).optional(),
-      });
+      let message: string;
+      let serviceId: string | undefined;
+      let selectedTools: string[] | undefined;
       
-      const { message, serviceId, selectedTools } = chatSchema.parse(req.body);
+      // Handle both JSON and FormData requests
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        // FormData request with file uploads
+        message = req.body.message || '';
+        serviceId = req.body.serviceId;
+        selectedTools = req.body.selectedTools ? JSON.parse(req.body.selectedTools) : undefined;
+        
+        // Read file contents and append to message
+        const files = req.files as Express.Multer.File[];
+        const fileContents = await Promise.all(files.map(readFileContent));
+        
+        if (fileContents.length > 0) {
+          message += (message ? '\n\n' : '') + '--- Attached Files ---\n' + fileContents.join('\n\n');
+        }
+      } else {
+        // Regular JSON request
+        const chatSchema = z.object({
+          message: z.string(),
+          serviceId: z.string().optional(),
+          selectedTools: z.array(z.string()).optional(),
+        });
+        
+        const parsed = chatSchema.parse(req.body);
+        message = parsed.message;
+        serviceId = parsed.serviceId;
+        selectedTools = parsed.selectedTools;
+      }
       
       // Store user message
       await storage.createMessage({

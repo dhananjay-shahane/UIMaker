@@ -13,10 +13,23 @@ export async function apiRequest(
   data?: unknown | undefined,
   signal?: AbortSignal
 ): Promise<Response> {
+  let headers: HeadersInit = {};
+  let body: string | FormData | undefined;
+  
+  if (data) {
+    if (data instanceof FormData) {
+      // Let the browser set Content-Type for FormData (including boundary)
+      body = data;
+    } else {
+      headers["Content-Type"] = "application/json";
+      body = JSON.stringify(data);
+    }
+  }
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers,
+    body,
     credentials: "include",
     signal,
   });

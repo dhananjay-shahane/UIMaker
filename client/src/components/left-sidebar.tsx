@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2, Copy, Code, StopCircle } from "lucide-react";
+import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2, Copy, Code, StopCircle, Paperclip, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import type { ChatMessage, LLMModel } from "@/types/mcp";
@@ -15,7 +15,7 @@ interface LeftSidebarProps {
   models: LLMModel[];
   messages: ChatMessage[];
   toggleTheme: () => void;
-  sendMessage: (message: string) => void;
+  sendMessage: (message: string, attachments?: File[]) => void;
   updateConfig: (updates: any) => void;
   isSending: boolean;
   onWidthChange: (width: number) => void;
@@ -38,8 +38,10 @@ export function LeftSidebar({
   const [isResizing, setIsResizing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [useTextarea, setUseTextarea] = useState(true); // Always use textarea for better UX
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Auto-scroll to bottom when new messages arrive
@@ -81,10 +83,34 @@ export function LeftSidebar({
   }, [isResizing, onWidthChange]);
 
   const handleSendMessage = () => {
-    if (inputMessage.trim()) {
-      sendMessage(inputMessage.trim());
+    if (inputMessage.trim() || attachedFiles.length > 0) {
+      sendMessage(inputMessage.trim(), attachedFiles);
       setInputMessage("");
+      setAttachedFiles([]);
     }
+  };
+
+  const handleFileAttachment = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setAttachedFiles(prev => [...prev, ...files]);
+    
+    toast({
+      title: "Files attached",
+      description: `${files.length} file(s) attached successfully`,
+    });
+    
+    // Clear the file input so the same file can be selected again
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -347,8 +373,8 @@ export function LeftSidebar({
               key={message.id} 
               className={`chat-message group relative p-4 rounded-lg animate-in fade-in-0 slide-in-from-bottom-2 ${
                 message.type === "user" 
-                  ? "bg-gray-100 dark:bg-gray-200 text-black dark:text-gray-800 ml-8 mr-2 shadow-md border-2 border-gray-300 dark:border-gray-400" 
-                  : "bg-white dark:bg-gray-50 text-black dark:text-gray-800 mr-8 ml-2 border-2 border-gray-200 dark:border-gray-300 shadow-sm"
+                  ? "bg-gray-100 dark:bg-gray-200 text-black dark:text-gray-800 ml-8 mr-2 shadow-md border-2 border-gray-300 dark:border-gray-400 max-w-[calc(100%-2.5rem)]" 
+                  : "bg-white dark:bg-gray-50 text-black dark:text-gray-800 mr-2 ml-2 border-2 border-gray-200 dark:border-gray-300 shadow-sm max-w-[calc(100%-1rem)]"
               }`}
               data-testid={`message-${message.type}-${message.id}`}
             >
@@ -392,7 +418,39 @@ export function LeftSidebar({
 
       {/* Chat Input */}
       <div className="p-4 border-t-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-200">
-        <div className="flex gap-3">
+        {/* File Attachments Display */}
+        {attachedFiles.length > 0 && (
+          <div className="mb-3">
+            <div className="text-xs text-gray-600 dark:text-gray-700 mb-2">Attached files:</div>
+            <div className="flex flex-wrap gap-2">
+              {attachedFiles.map((file, index) => (
+                <div key={index} className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-200 rounded-lg text-xs">
+                  <span className="text-blue-800 dark:text-blue-900 truncate max-w-32">{file.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeAttachment(index)}
+                    className="h-4 w-4 p-0 text-blue-600 hover:text-red-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.webp"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        
+        <div className="flex gap-2">
           {useTextarea ? (
             <Textarea
               placeholder="Type a message... (Press Enter to send, Shift+Enter for new line)"
@@ -416,6 +474,18 @@ export function LeftSidebar({
               data-testid="input-chat-message"
             />
           )}
+          
+          {/* Attachment Button */}
+          <Button
+            onClick={handleFileAttachment}
+            variant="outline"
+            disabled={isSending}
+            className="h-12 px-3 border-gray-300 dark:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-300 transition-all duration-200"
+            data-testid="button-attach-file"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          
           {isSending && (
             <Button 
               onClick={stopChat}
@@ -428,7 +498,7 @@ export function LeftSidebar({
           )}
           <Button 
             onClick={handleSendMessage}
-            disabled={isSending || !inputMessage.trim()}
+            disabled={isSending || (!inputMessage.trim() && attachedFiles.length === 0)}
             className="h-12 px-4 bg-primary hover:bg-primary/90 shadow-sm hover:shadow-md transition-all duration-200"
             data-testid="button-send-message"
           >
