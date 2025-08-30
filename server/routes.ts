@@ -99,15 +99,27 @@ ${selectedTools && selectedTools.length > 0 ? `Available tools: ${selectedTools.
 Be helpful, concise, and ask clarifying questions when needed to better assist the user.`;
 
       try {
-        // Call Ollama with configured model
-        const response = await ollama.chat({
-          model: ollamaModel,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: message }
-          ],
-          stream: false,
-        });
+        // Call Ollama with configured model and optimized settings for faster responses
+        const response = await Promise.race([
+          ollama.chat({
+            model: ollamaModel,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: message }
+            ],
+            stream: false,
+            options: {
+              temperature: 0.7,
+              top_p: 0.9,
+              num_predict: 500, // Limit response length for faster generation
+              stop: ['\n\n\n'], // Stop at triple newlines to prevent overly long responses
+            }
+          }),
+          // Add 15 second timeout to prevent very slow responses
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Response timeout')), 15000)
+          )
+        ]) as any;
 
         const aiResponse = response.message.content;
 

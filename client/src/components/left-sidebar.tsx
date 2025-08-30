@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -34,6 +35,7 @@ export function LeftSidebar({
   const [inputMessage, setInputMessage] = useState("");
   const [isResizing, setIsResizing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [useTextarea, setUseTextarea] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -84,9 +86,24 @@ export function LeftSidebar({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && e.shiftKey) {
+      // Allow shift+enter for new lines, switch to textarea
+      setUseTextarea(true);
+    } else if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setInputMessage(value);
+    
+    // Switch to textarea if content has multiple lines or is long
+    if (value.includes('\n') || value.length > 100) {
+      setUseTextarea(true);
+    } else if (value.length < 50 && !value.includes('\n')) {
+      setUseTextarea(false);
     }
   };
 
@@ -368,16 +385,29 @@ export function LeftSidebar({
       {/* Chat Input */}
       <div className="p-4 border-t-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-200">
         <div className="flex gap-3">
-          <Input
-            type="text"
-            placeholder="Type a message..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={isSending}
-            className="chat-input-glass flex-1 h-12 bg-white dark:bg-gray-100 border-gray-300 dark:border-gray-400 text-black dark:text-gray-800 focus:border-blue-500 border-2 shadow-sm focus:shadow-md transition-shadow"
-            data-testid="input-chat-message"
-          />
+          {useTextarea ? (
+            <Textarea
+              placeholder="Type a message... (Press Enter to send, Shift+Enter for new line)"
+              value={inputMessage}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyPress}
+              disabled={isSending}
+              className="chat-input-glass flex-1 min-h-[48px] max-h-32 bg-white dark:bg-gray-100 border-gray-300 dark:border-gray-400 text-black dark:text-gray-800 focus:border-blue-500 border-2 shadow-sm focus:shadow-md transition-shadow resize-none"
+              data-testid="textarea-chat-message"
+              rows={Math.min(4, Math.max(1, inputMessage.split('\n').length))}
+            />
+          ) : (
+            <Input
+              type="text"
+              placeholder="Type a message... (Shift+Enter for multiline)"
+              value={inputMessage}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+              disabled={isSending}
+              className="chat-input-glass flex-1 h-12 bg-white dark:bg-gray-100 border-gray-300 dark:border-gray-400 text-black dark:text-gray-800 focus:border-blue-500 border-2 shadow-sm focus:shadow-md transition-shadow"
+              data-testid="input-chat-message"
+            />
+          )}
           {isSending && (
             <Button 
               onClick={() => {/* Stop functionality */}}
