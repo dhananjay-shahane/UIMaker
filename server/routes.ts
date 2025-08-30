@@ -126,21 +126,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get real-time connected MCP servers for dynamic prompt
       const connectedMCPServers = getConnectedMCPServers();
       
-      // Create dynamic system prompt based on actually connected MCP services
-      const servicesList = connectedMCPServers.length > 0 
-        ? connectedMCPServers.map(s => s.name).join(', ') 
-        : 'No MCP services currently connected';
+      // Filter servers based on selected service (if any)
+      let relevantServers = connectedMCPServers;
+      if (serviceId && serviceId !== 'configuration') {
+        relevantServers = connectedMCPServers.filter(server => 
+          server.name.toLowerCase().includes(serviceId.toLowerCase()) ||
+          server.url.includes(serviceId)
+        );
+      }
+      
+      // Create dynamic system prompt based on selected or all connected MCP services
+      const servicesList = relevantServers.length > 0 
+        ? relevantServers.map(s => s.name).join(', ') 
+        : (serviceId && serviceId !== 'configuration' ? `Selected service "${serviceId}" not currently connected` : 'No MCP services currently connected');
         
-      const toolsList = connectedMCPServers.length > 0 
-        ? `\n\nAvailable tools by service:\n${connectedMCPServers.map(server => 
+      const toolsList = relevantServers.length > 0 
+        ? `\n\nAvailable tools${serviceId && serviceId !== 'configuration' ? ` for ${serviceId}` : ''}:\n${relevantServers.map(server => 
             `${server.name}: ${server.tools.join(', ')}`
           ).join('\n')}` 
         : '';
         
       const systemPrompt = `You are an AI assistant that helps users interact with Model Context Protocol (MCP) services. 
 
-Currently connected MCP services: ${servicesList}
-${serviceId ? `\nCurrently selected service: ${serviceId}` : ''}
+${serviceId && serviceId !== 'configuration' ? `Currently selected service: ${serviceId}` : `All connected MCP services: ${servicesList}`}
 ${selectedTools && selectedTools.length > 0 ? `\nSelected tools: ${selectedTools.join(', ')}` : ''}${toolsList}
 
 I can help you interact with these MCP services and execute their available tools. What would you like to do?`;
