@@ -22,6 +22,7 @@ export function useMCPClient() {
 
   const [permissionRequest, setPermissionRequest] = useState<PermissionRequest | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarSide, setSidebarSide] = useState<'left' | 'right'>('left');
 
   // Load services data
   const { data: services = [], isLoading: servicesLoading } = useQuery<MCPService[]>({
@@ -243,6 +244,8 @@ export function useMCPClient() {
     permissionRequest,
     sidebarWidth,
     setSidebarWidth,
+    sidebarSide,
+    setSidebarSide,
     isLoading: servicesLoading || modelsLoading,
     sendMessage,
     toggleToolSelection,

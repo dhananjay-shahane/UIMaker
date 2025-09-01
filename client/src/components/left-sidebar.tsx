@@ -4,10 +4,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2, Copy, Code, StopCircle, Paperclip, X } from "lucide-react";
+import { Sun, Moon, Settings, Bot, RotateCcw, Send, Circle, Square, GripVertical, Loader2, Copy, Code, StopCircle, Paperclip, X, PanelLeftOpen, PanelRightOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import type { ChatMessage, LLMModel } from "@/types/mcp";
+import { TypewriterText } from "@/components/typewriter-text";
 
 interface LeftSidebarProps {
   width: number;
@@ -20,6 +21,8 @@ interface LeftSidebarProps {
   isSending: boolean;
   onWidthChange: (width: number) => void;
   stopChat: () => void;
+  sidebarSide: 'left' | 'right';
+  setSidebarSide: (side: 'left' | 'right') => void;
 }
 
 export function LeftSidebar({
@@ -32,13 +35,16 @@ export function LeftSidebar({
   updateConfig,
   isSending,
   onWidthChange,
-  stopChat
+  stopChat,
+  sidebarSide,
+  setSidebarSide
 }: LeftSidebarProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isResizing, setIsResizing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [useTextarea, setUseTextarea] = useState(true); // Always use textarea for better UX
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [completedMessages, setCompletedMessages] = useState<Set<string>>(new Set());
   const sidebarRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +69,12 @@ export function LeftSidebar({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-      const newWidth = Math.max(280, Math.min(600, e.clientX));
+      let newWidth;
+      if (sidebarSide === 'left') {
+        newWidth = Math.max(200, Math.min(window.innerWidth - 100, e.clientX));
+      } else {
+        newWidth = Math.max(200, Math.min(window.innerWidth - 100, window.innerWidth - e.clientX));
+      }
       onWidthChange(newWidth);
     };
 
@@ -177,7 +188,7 @@ export function LeftSidebar({
     return result;
   };
 
-  const renderMessageContent = (content: string, isAssistant: boolean, isThinking?: boolean) => {
+  const renderMessageContent = (content: string, isAssistant: boolean, messageId: string, isThinking?: boolean) => {
     if (isThinking) {
       return (
         <div className="flex items-center gap-2">
@@ -235,6 +246,18 @@ export function LeftSidebar({
                 </div>
               );
             } else {
+              const isCompleted = completedMessages.has(messageId);
+              if (isAssistant && !isCompleted) {
+                return (
+                  <TypewriterText
+                    key={index}
+                    text={part}
+                    speed={25}
+                    className="text-sm leading-relaxed break-words whitespace-pre-wrap overflow-hidden"
+                    onComplete={() => setCompletedMessages(prev => new Set(prev).add(messageId))}
+                  />
+                );
+              }
               return <div key={index} className="text-sm leading-relaxed break-words whitespace-pre-wrap overflow-hidden" dangerouslySetInnerHTML={{ __html: renderMarkdownText(part) }} />;
             }
           })}
@@ -242,8 +265,19 @@ export function LeftSidebar({
       );
     }
     
-    // For assistant messages without code blocks, render markdown
+    // For assistant messages without code blocks, render markdown with typewriter effect
     if (isAssistant) {
+      const isCompleted = completedMessages.has(messageId);
+      if (!isCompleted) {
+        return (
+          <TypewriterText
+            text={content}
+            speed={25}
+            className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden"
+            onComplete={() => setCompletedMessages(prev => new Set(prev).add(messageId))}
+          />
+        );
+      }
       return <div className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-full overflow-hidden" dangerouslySetInnerHTML={{ __html: renderMarkdownText(content) }} />;
     }
     
@@ -255,7 +289,7 @@ export function LeftSidebar({
     <div 
       ref={sidebarRef}
       className="bg-white dark:bg-gray-200 border-r border-gray-200 dark:border-gray-400 flex flex-col relative"
-      style={{ width, minWidth: 280, maxWidth: 600 }}
+      style={{ width, minWidth: 200 }}
     >
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-400">
@@ -269,6 +303,15 @@ export function LeftSidebar({
               data-testid="button-theme-toggle"
             >
               {config.darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setSidebarSide(sidebarSide === 'left' ? 'right' : 'left')}
+              title={`Switch to ${sidebarSide === 'left' ? 'right' : 'left'} side`}
+              data-testid="button-switch-side"
+            >
+              {sidebarSide === 'left' ? <PanelRightOpen className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
             </Button>
             <Button 
               variant="ghost" 
@@ -391,7 +434,7 @@ export function LeftSidebar({
                   )}
                 </div>
                 <div className="flex-1 min-w-0 overflow-hidden">
-                  {renderMessageContent(message.content, message.type === "assistant", message.isThinking)}
+                  {renderMessageContent(message.content, message.type === "assistant", message.id, message.isThinking)}
                   <div className="flex items-center justify-between mt-2">
                     <span className={`text-xs ${
                       message.type === "user" ? "text-gray-600 dark:text-gray-700" : "text-gray-500 dark:text-gray-600"

@@ -9,13 +9,27 @@ export function MCPClient() {
 
   return (
     <div className="main-container flex h-screen overflow-hidden bg-white dark:bg-gray-300 text-black dark:text-gray-800">
-      <LeftSidebar 
-        {...mcpClient}
-        width={mcpClient.sidebarWidth}
-        onWidthChange={mcpClient.setSidebarWidth}
-      />
+      {mcpClient.sidebarSide === 'left' && (
+        <LeftSidebar 
+          {...mcpClient}
+          width={mcpClient.sidebarWidth}
+          onWidthChange={mcpClient.setSidebarWidth}
+          sidebarSide={mcpClient.sidebarSide}
+          setSidebarSide={mcpClient.setSidebarSide}
+        />
+      )}
       
       <MainContent {...mcpClient} />
+      
+      {mcpClient.sidebarSide === 'right' && (
+        <LeftSidebar 
+          {...mcpClient}
+          width={mcpClient.sidebarWidth}
+          onWidthChange={mcpClient.setSidebarWidth}
+          sidebarSide={mcpClient.sidebarSide}
+          setSidebarSide={mcpClient.setSidebarSide}
+        />
+      )}
       
       {mcpClient.permissionRequest && (
         <PermissionModal 
