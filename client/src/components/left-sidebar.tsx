@@ -68,19 +68,30 @@ export function LeftSidebar({
       const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollElement) {
         scrollElement.scrollTop = scrollElement.scrollHeight;
-        
-        // Add scroll listener to show/hide scroll-to-bottom button
-        const handleScroll = () => {
-          const { scrollTop, scrollHeight, clientHeight } = scrollElement;
-          const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-          setShowScrollBottom(!isNearBottom && messages.length > 0);
-        };
-        
-        scrollElement.addEventListener('scroll', handleScroll);
-        return () => scrollElement.removeEventListener('scroll', handleScroll);
       }
     }
   }, [messages]);
+
+  // Set up scroll detection for scroll-to-bottom button
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        const handleScroll = () => {
+          const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+          const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+          const shouldShow = !isNearBottom && messages.length > 3;
+          setShowScrollBottom(shouldShow);
+        };
+        
+        scrollElement.addEventListener('scroll', handleScroll);
+        // Initial check
+        handleScroll();
+        
+        return () => scrollElement.removeEventListener('scroll', handleScroll);
+      }
+    }
+  }, [messages.length]);
 
   // Handle sidebar resizing
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -561,10 +572,10 @@ export function LeftSidebar({
         {showScrollBottom && (
           <Button
             onClick={scrollToBottom}
-            className="absolute bottom-4 right-4 h-10 w-10 rounded-full bg-primary hover:bg-primary/90 shadow-lg border-2 border-white dark:border-gray-200 z-10"
+            className="absolute bottom-6 right-6 h-12 w-12 rounded-full bg-primary hover:bg-primary/90 shadow-xl border-2 border-white dark:border-gray-200 z-20 transition-all duration-300 animate-in fade-in-0 slide-in-from-bottom-2"
             data-testid="button-scroll-bottom"
           >
-            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
           </Button>
