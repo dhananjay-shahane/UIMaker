@@ -46,17 +46,38 @@ export function LeftSidebar({
   const [useTextarea, setUseTextarea] = useState(true); // Always use textarea for better UX
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [completedMessages, setCompletedMessages] = useState<Set<string>>(new Set());
+  const [databaseUrl, setDatabaseUrl] = useState("");
+  const [ollamaBaseUrl, setOllamaBaseUrl] = useState("");
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Auto-scroll to bottom when new messages arrive
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedDatabaseUrl = localStorage.getItem('app_database_url') || '';
+    const savedOllamaUrl = localStorage.getItem('app_ollama_base_url') || '';
+    setDatabaseUrl(savedDatabaseUrl);
+    setOllamaBaseUrl(savedOllamaUrl);
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive and handle scroll detection
   useEffect(() => {
     if (scrollAreaRef.current) {
       const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollElement) {
         scrollElement.scrollTop = scrollElement.scrollHeight;
+        
+        // Add scroll listener to show/hide scroll-to-bottom button
+        const handleScroll = () => {
+          const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+          const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+          setShowScrollBottom(!isNearBottom && messages.length > 0);
+        };
+        
+        scrollElement.addEventListener('scroll', handleScroll);
+        return () => scrollElement.removeEventListener('scroll', handleScroll);
       }
     }
   }, [messages]);
@@ -140,6 +161,28 @@ export function LeftSidebar({
     setInputMessage(value);
     
     // Always use textarea for better UX - removed switching logic
+  };
+
+  const saveSettings = () => {
+    localStorage.setItem('app_database_url', databaseUrl);
+    localStorage.setItem('app_ollama_base_url', ollamaBaseUrl);
+    setShowSettings(false);
+    toast({
+      title: "Settings saved",
+      description: "Your configuration has been saved successfully",
+    });
+  };
+
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTo({
+          top: scrollElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }
   };
 
   const formatTime = (date: Date | string) => {
@@ -323,39 +366,82 @@ export function LeftSidebar({
               <Settings className="h-4 w-4" />
             </Button>
             
-            {/* Settings Popup */}
+            {/* Settings Modal - Centered */}
             {showSettings && (
               <>
                 <div 
-                  className="fixed inset-0 z-40" 
+                  className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" 
                   onClick={() => setShowSettings(false)}
                 />
-                <div className="settings-popup w-80 p-4 z-50">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">Settings</h3>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => setShowSettings(false)}
-                      className="h-6 w-6 p-0"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <p className="font-medium mb-2">Current Model</p>
-                      <p className="text-sm text-muted-foreground">
-                        {models.find(m => m.id === config.selectedModel)?.name || 'Unknown Model'}
-                      </p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="bg-white dark:bg-gray-100 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-300 w-full max-w-md p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="font-semibold text-xl text-black dark:text-gray-800">Settings & Memory Config</h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setShowSettings(false)}
+                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+                        data-testid="button-close-settings"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                     
-                    <Separator />
-                    
-                    <div>
-                      <p className="font-medium mb-2">App Version</p>
-                      <p className="text-sm text-muted-foreground">MCP Client v1.0.0</p>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block font-medium mb-2 text-black dark:text-gray-800">Database URL (PostgreSQL)</label>
+                        <Input
+                          type="text"
+                          placeholder="postgresql://username:password@host:port/database"
+                          value={databaseUrl}
+                          onChange={(e) => setDatabaseUrl(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-400 text-black dark:text-gray-800"
+                          data-testid="input-database-url"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
+                          Leave empty to use local storage for chat history
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="block font-medium mb-2 text-black dark:text-gray-800">Ollama Base URL</label>
+                        <Input
+                          type="text"
+                          placeholder="http://localhost:11434"
+                          value={ollamaBaseUrl}
+                          onChange={(e) => setOllamaBaseUrl(e.target.value)}
+                          className="w-full bg-white dark:bg-gray-50 border-gray-300 dark:border-gray-400 text-black dark:text-gray-800"
+                          data-testid="input-ollama-url"
+                        />
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div>
+                        <p className="font-medium mb-2 text-black dark:text-gray-800">Current Model</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-700">
+                          {models.find(m => m.id === config.selectedModel)?.name || 'Unknown Model'}
+                        </p>
+                      </div>
+                      
+                      <div className="flex gap-3 pt-4">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1" 
+                          onClick={() => setShowSettings(false)}
+                          data-testid="button-cancel-settings"
+                        >
+                          Close
+                        </Button>
+                        <Button 
+                          onClick={saveSettings}
+                          className="flex-1 bg-primary hover:bg-primary/90"
+                          data-testid="button-save-settings"
+                        >
+                          Save
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -401,8 +487,9 @@ export function LeftSidebar({
       </div>
 
       {/* Chat Messages */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 overflow-hidden no-scrollbar">
-        <div className="space-y-4 pr-2 max-w-full">
+      <div className="flex-1 relative">
+        <ScrollArea ref={scrollAreaRef} className="h-full p-4 overflow-hidden no-scrollbar">
+          <div className="space-y-4 pr-2 max-w-full">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bot className="h-12 w-12 text-blue-600 dark:text-blue-500 mb-4" />
@@ -467,8 +554,22 @@ export function LeftSidebar({
               </div>
             </div>
           ))}
-        </div>
-      </ScrollArea>
+          </div>
+        </ScrollArea>
+        
+        {/* Scroll to Bottom Button */}
+        {showScrollBottom && (
+          <Button
+            onClick={scrollToBottom}
+            className="absolute bottom-4 right-4 h-10 w-10 rounded-full bg-primary hover:bg-primary/90 shadow-lg border-2 border-white dark:border-gray-200 z-10"
+            data-testid="button-scroll-bottom"
+          >
+            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </Button>
+        )}
+      </div>
 
       {/* Chat Input */}
       <div className="p-4 border-t-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-200">

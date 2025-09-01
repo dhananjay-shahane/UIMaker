@@ -1,5 +1,7 @@
-import { type User, type InsertUser, type MCPService, type InsertMCPService, type MCPTool, type InsertMCPTool, type ChatMessage, type InsertChatMessage } from "@shared/schema";
+import { type User, type InsertUser, type MCPService, type InsertMCPService, type MCPTool, type InsertMCPTool, type ChatMessage, type InsertChatMessage, users, chatMessages } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -132,10 +134,175 @@ export class MemStorage implements IStorage {
       id,
       userId: message.userId || null,
       timestamp: new Date(),
+      attachedFiles: message.attachedFiles || [],
     };
     this.messages.set(id, newMessage);
     return newMessage;
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: string): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user || undefined;
+    } catch (error) {
+      console.error('Database error in getUser:', error);
+      return undefined;
+    }
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user || undefined;
+    } catch (error) {
+      console.error('Database error in getUserByUsername:', error);
+      return undefined;
+    }
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getServices(): Promise<MCPService[]> {
+    // Services are managed in-memory/localStorage, not in database
+    return [];
+  }
+
+  async getService(id: string): Promise<MCPService | undefined> {
+    return undefined;
+  }
+
+  async createService(service: InsertMCPService): Promise<MCPService> {
+    throw new Error("Services are managed client-side");
+  }
+
+  async updateService(id: string, updates: Partial<MCPService>): Promise<MCPService> {
+    throw new Error("Services are managed client-side");
+  }
+
+  async getToolsByService(serviceId: string): Promise<MCPTool[]> {
+    return [];
+  }
+
+  async createTool(tool: InsertMCPTool): Promise<MCPTool> {
+    throw new Error("Tools are managed client-side");
+  }
+
+  async updateTool(id: string, updates: Partial<MCPTool>): Promise<MCPTool> {
+    throw new Error("Tools are managed client-side");
+  }
+
+  async getMessages(): Promise<ChatMessage[]> {
+    try {
+      const messages = await db.select().from(chatMessages).orderBy(chatMessages.timestamp);
+      return messages.map(msg => ({
+        ...msg,
+        attachedFiles: msg.attachedFiles as any[] || []
+      }));
+    } catch (error) {
+      console.error('Database error in getMessages:', error);
+      return [];
+    }
+  }
+
+  async createMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [newMessage] = await db
+      .insert(chatMessages)
+      .values(message)
+      .returning();
+    return {
+      ...newMessage,
+      attachedFiles: newMessage.attachedFiles as any[] || []
+    };
+  }
+}
+
+// Create storage instance that can switch between memory and database
+class HybridStorage implements IStorage {
+  private memStorage: MemStorage;
+  private dbStorage: DatabaseStorage;
+  private useDatabase: boolean = false;
+
+  constructor() {
+    this.memStorage = new MemStorage();
+    this.dbStorage = new DatabaseStorage();
+    
+    // Check if database should be used based on environment
+    this.useDatabase = Boolean(process.env.DATABASE_URL);
+  }
+
+  // For chat messages, use database if configured, otherwise use memory
+  async getMessages(): Promise<ChatMessage[]> {
+    if (this.useDatabase) {
+      try {
+        return await this.dbStorage.getMessages();
+      } catch (error) {
+        console.error('Database fallback to memory storage:', error);
+        return await this.memStorage.getMessages();
+      }
+    }
+    return await this.memStorage.getMessages();
+  }
+
+  async createMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    if (this.useDatabase) {
+      try {
+        return await this.dbStorage.createMessage(message);
+      } catch (error) {
+        console.error('Database fallback to memory storage:', error);
+        return await this.memStorage.createMessage(message);
+      }
+    }
+    return await this.memStorage.createMessage(message);
+  }
+
+  // All other methods use memory storage
+  async getUser(id: string): Promise<User | undefined> {
+    return this.memStorage.getUser(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return this.memStorage.getUserByUsername(username);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    return this.memStorage.createUser(user);
+  }
+
+  async getServices(): Promise<MCPService[]> {
+    return this.memStorage.getServices();
+  }
+
+  async getService(id: string): Promise<MCPService | undefined> {
+    return this.memStorage.getService(id);
+  }
+
+  async createService(service: InsertMCPService): Promise<MCPService> {
+    return this.memStorage.createService(service);
+  }
+
+  async updateService(id: string, updates: Partial<MCPService>): Promise<MCPService> {
+    return this.memStorage.updateService(id, updates);
+  }
+
+  async getToolsByService(serviceId: string): Promise<MCPTool[]> {
+    return this.memStorage.getToolsByService(serviceId);
+  }
+
+  async createTool(tool: InsertMCPTool): Promise<MCPTool> {
+    return this.memStorage.createTool(tool);
+  }
+
+  async updateTool(id: string, updates: Partial<MCPTool>): Promise<MCPTool> {
+    return this.memStorage.updateTool(id, updates);
+  }
+}
+
+export const storage = new HybridStorage();
