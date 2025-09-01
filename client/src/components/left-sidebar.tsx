@@ -497,10 +497,10 @@ export function LeftSidebar({
         </div>
       </div>
 
-      {/* Chat Messages */}
-      <div className="flex-1 relative">
-        <ScrollArea ref={scrollAreaRef} className="h-full p-4 overflow-hidden no-scrollbar">
-          <div className="space-y-4 pr-2 max-w-full">
+      {/* Chat Messages - Fixed height container */}
+      <div className="flex-1 relative flex flex-col min-h-0">
+        <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+          <div className="space-y-4 pr-2 max-w-full pb-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bot className="h-12 w-12 text-blue-600 dark:text-blue-500 mb-4" />
@@ -582,8 +582,8 @@ export function LeftSidebar({
         )}
       </div>
 
-      {/* Chat Input */}
-      <div className="p-4 border-t-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-200">
+      {/* Chat Input - Fixed at bottom */}
+      <div className="flex-shrink-0 p-4 border-t-2 border-gray-200 dark:border-gray-400 bg-white dark:bg-gray-200">
         {/* File Attachments Display */}
         {attachedFiles.length > 0 && (
           <div className="mb-3">
