@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import type { ChatMessage, LLMModel } from "@/types/mcp";
 import { TypewriterText } from "@/components/typewriter-text";
+import { FilePreview } from "@/components/file-preview";
 
 interface LeftSidebarProps {
   width: number;
@@ -435,6 +436,16 @@ export function LeftSidebar({
                 </div>
                 <div className="flex-1 min-w-0 overflow-hidden">
                   {renderMessageContent(message.content, message.type === "assistant", message.id, message.isThinking)}
+                  
+                  {/* Display attached files if they exist */}
+                  {message.attachedFiles && message.attachedFiles.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {message.attachedFiles.map((file, index) => (
+                        <FilePreview key={index} file={file} />
+                      ))}
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between mt-2">
                     <span className={`text-xs ${
                       message.type === "user" ? "text-gray-600 dark:text-gray-700" : "text-gray-500 dark:text-gray-600"

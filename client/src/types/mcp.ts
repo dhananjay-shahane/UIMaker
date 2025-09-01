@@ -18,12 +18,22 @@ export interface MCPTool {
   selected: boolean;
 }
 
+export interface FileAttachment {
+  originalName: string;
+  filename: string;
+  path: string;
+  mimetype: string;
+  size: number;
+  uploadDate: string;
+}
+
 export interface ChatMessage {
   id: string;
   content: string;
   timestamp: Date;
   type: "user" | "assistant";
   isThinking?: boolean;
+  attachedFiles?: FileAttachment[];
 }
 
 export interface LLMModel {

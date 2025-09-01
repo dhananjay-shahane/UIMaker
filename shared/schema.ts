@@ -38,6 +38,7 @@ export const chatMessages = pgTable("chat_messages", {
   type: text("type").notNull(), // 'user' | 'assistant'
   timestamp: timestamp("timestamp").defaultNow(),
   userId: varchar("user_id"),
+  attachedFiles: jsonb("attached_files").default([]),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -55,6 +56,8 @@ export const insertMCPToolSchema = createInsertSchema(mcpTools);
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   id: true,
   timestamp: true,
+}).extend({
+  attachedFiles: z.array(z.any()).optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -63,5 +66,7 @@ export type MCPService = typeof mcpServices.$inferSelect;
 export type InsertMCPService = z.infer<typeof insertMCPServiceSchema>;
 export type MCPTool = typeof mcpTools.$inferSelect;
 export type InsertMCPTool = z.infer<typeof insertMCPToolSchema>;
-export type ChatMessage = typeof chatMessages.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect & {
+  attachedFiles?: any[];
+};
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;

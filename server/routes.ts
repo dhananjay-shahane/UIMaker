@@ -7,6 +7,7 @@ import { Ollama } from "ollama";
 import { testMCPConnection, callMCPToolWithConfig, listMCPToolsWithConfig, listMCPPromptsWithConfig, listMCPResourcesWithConfig } from "./mcp-actions";
 import multer from "multer";
 import fs from "fs/promises";
+import path from "path";
 
 // Global storage for tracking successful MCP connections
 const connectedServers = new Map<string, { name: string; url: string; tools: string[]; lastSeen: Date }>();
@@ -56,22 +57,30 @@ const upload = multer({
   }
 });
 
-// Helper function to read file content
-async function readFileContent(file: Express.Multer.File): Promise<string> {
+// Helper function to read file content and preserve files
+async function readFileContent(file: Express.Multer.File): Promise<{ content: string; metadata: any }> {
   try {
+    let content = '';
+    
     if (file.mimetype.startsWith('text/') || file.mimetype === 'application/pdf') {
-      const content = await fs.readFile(file.path, 'utf-8');
-      // Clean up uploaded file
-      await fs.unlink(file.path).catch(() => {});
-      return content;
+      content = await fs.readFile(file.path, 'utf-8');
     } else if (file.mimetype.startsWith('image/')) {
-      // For images, return a description
-      return `[Image: ${file.originalname}, Size: ${(file.size / 1024).toFixed(1)}KB]`;
+      content = `[Image: ${file.originalname}]`;
+    } else {
+      content = `[File: ${file.originalname}]`;
     }
-    return `[File: ${file.originalname}, Type: ${file.mimetype}, Size: ${(file.size / 1024).toFixed(1)}KB]`;
+    
+    const metadata = {
+      originalName: file.originalname,
+      filename: file.filename,
+      path: file.path,
+      mimetype: file.mimetype,
+      size: file.size,
+      uploadDate: new Date().toISOString()
+    };
+    
+    return { content, metadata };
   } catch (error) {
-    // Clean up uploaded file on error
-    await fs.unlink(file.path).catch(() => {});
     throw error;
   }
 }
@@ -145,6 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let message: string;
       let serviceId: string | undefined;
       let selectedTools: string[] | undefined;
+      let fileMetadata: any[] = [];
       
       // Handle both JSON and FormData requests
       if (req.files && Array.isArray(req.files) && req.files.length > 0) {
@@ -153,9 +163,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         serviceId = req.body.serviceId;
         selectedTools = req.body.selectedTools ? JSON.parse(req.body.selectedTools) : undefined;
         
-        // Read file contents and append to message
+        // Process uploaded files
         const files = req.files as Express.Multer.File[];
-        const fileContents = await Promise.all(files.map(readFileContent));
+        const fileProcessingResults = await Promise.all(files.map(readFileContent));
+        fileMetadata = fileProcessingResults.map(result => result.metadata);
+        const fileContents = fileProcessingResults.map(result => result.content);
         
         if (fileContents.length > 0) {
           message += (message ? '\n\n' : '') + '--- Attached Files ---\n' + fileContents.join('\n\n');
@@ -174,10 +186,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         selectedTools = parsed.selectedTools;
       }
       
-      // Store user message
+      // Store user message with file metadata
       await storage.createMessage({
         content: message,
         type: "user",
+        attachedFiles: fileMetadata.length > 0 ? fileMetadata : undefined,
       });
 
       // Initialize Ollama client using environment variables
@@ -213,7 +226,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 ${serviceId && serviceId !== 'configuration' ? `Currently selected service: ${serviceId}` : `All connected MCP services: ${servicesList}`}
 ${selectedTools && selectedTools.length > 0 ? `\nSelected tools: ${selectedTools.join(', ')}` : ''}${toolsList}
 
-I can help you interact with these MCP services and execute their available tools. What would you like to do?`;
+I can help you interact with these MCP services and execute their available tools. 
+
+If you have uploaded files, I can analyze and answer questions about their contents. I understand various file formats including text documents, PDFs, and images.
+
+What would you like to do?`;
 
       try {
         // Call Ollama with configured model and optimized settings for ngrok connection
@@ -245,6 +262,7 @@ I can help you interact with these MCP services and execute their available tool
         const responseMessage = await storage.createMessage({
           content: aiResponse,
           type: "assistant",
+          attachedFiles: undefined,
         });
 
         res.json({ response: responseMessage });
@@ -379,6 +397,24 @@ I can help you interact with these MCP services and execute their available tool
         success: false, 
         error: error instanceof Error ? error.message : "Invalid request" 
       });
+    }
+  });
+
+  // Serve uploaded files
+  app.get("/api/files/:filename", (req, res) => {
+    try {
+      const { filename } = req.params;
+      const filePath = path.join(process.cwd(), 'uploads', filename);
+      
+      // Check if file exists (synchronously for this endpoint)
+      const fsSync = require('fs');
+      if (!fsSync.existsSync(filePath)) {
+        return res.status(404).json({ message: "File not found" });
+      }
+      
+      res.sendFile(filePath);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to serve file" });
     }
   });
 
